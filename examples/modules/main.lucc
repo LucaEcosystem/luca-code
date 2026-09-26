@@ -1,0 +1,11 @@
+import helpers
+print(helpers.greet())
+print(helpers.greet("Luca"))
+print(helpers.version)
+print(helpers.tags[1])
+print(helpers.tags.contains("modules"))
+import helpers
+print(helpers.counted())
+print(helpers.counted())
+for tag from helpers.tags repeat :
+    print(tag)

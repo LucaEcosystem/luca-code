@@ -1,0 +1,5 @@
+def error NotFound :
+    code = 404
+    message = "gone"
+
+def var x = 1

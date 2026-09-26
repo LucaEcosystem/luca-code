@@ -1,0 +1,4 @@
+def var count = 0
+def func bump() (int):
+    count = count + 1
+    return count

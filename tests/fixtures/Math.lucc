@@ -1,0 +1,2 @@
+-- Decoy: built-in Math must win over this file.
+def var dummy = 1

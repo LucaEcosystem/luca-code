@@ -1,0 +1,41 @@
+def func greet(name (str) = "Luca") (str):
+    return "Hello, {name}!"
+
+print(greet())
+print(greet("Alex"))
+
+def func add(a (int), b (int)) (int):
+    return a + b
+
+print(add(2, 3))
+print(add(10, 20))
+
+def func fact(n (int)) (int):
+    if n is <= to 1 then :
+        return 1
+    else :
+        return n * fact(n - 1)
+
+print(fact(5))
+
+def var counter = 0
+def func inc():
+    counter = counter + 1
+
+inc()
+inc()
+print(counter)
+
+def func outer():
+    def var y = 10
+    def func inner() (int):
+        return y + 5
+    print(inner())
+
+outer()
+
+def func echo(x):
+    return x
+
+print(echo(5))
+print(echo("hi"))

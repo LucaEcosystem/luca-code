@@ -1,0 +1,16 @@
+import Math
+import Text
+import File
+import System
+
+print(Math.sqrt(25))
+print(Math.pow(2, 10))
+print(Math.round(2.5))
+print(Math.min(3, 1, 2))
+print(Text.upper("hello"))
+print(Text.join(Text.split("a,b,c", ","), "-"))
+print(File.exists("examples/hello.lucc"))
+print(File.read("examples/hello.lucc").length is > to 0)
+File.delete("examples/.no-such-demo-file")
+print(System.os.length is > to 0)
+print(System.args().length is >= to 1)

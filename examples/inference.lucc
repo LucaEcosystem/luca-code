@@ -1,0 +1,12 @@
+def var username = "Luca"
+def var visits = 1
+visits = visits + 1
+print("Hello, {username}! Visit {visits}")
+
+def var pi = 3.14
+print(pi)
+
+def var count (int) = none
+print(count)
+count (int) = 5
+print(count)

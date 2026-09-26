@@ -1,0 +1,3 @@
+import Base
+def func mid_fn() (int):
+    return Base.base_fn() + 1

@@ -1,0 +1,49 @@
+def var sum = 0
+for 5 times repeat :
+    sum = sum + 1
+print(sum)
+
+def var i = 0
+def var total = 0
+while i is < to 5 repeat :
+    total = total + i
+    i = i + 1
+print(total)
+
+for 3 times repeat :
+    print("hi")
+
+def var x = 0
+for 5 times repeat :
+    x = x + 1
+    if x is == to 3 then :
+        stop
+print(x)
+
+def var s = 0
+def var y = 0
+for 5 times repeat :
+    y = y + 1
+    if y is == to 2 then :
+        skip
+    s = s + y
+print(s)
+
+for 2 times repeat :
+    for 2 times repeat :
+        print("nested")
+
+def var n = 5
+while n is > to 0 repeat :
+    print(n)
+    n = n - 1
+    if n is == to 2 then :
+        stop
+print("done")
+
+def func countdown(n (int)):
+    while n is > to 0 repeat :
+        print(n)
+        n = n - 1
+
+countdown(3)

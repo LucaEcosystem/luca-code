@@ -1,0 +1,14 @@
+def var a = 5
+def var b = 5.0
+print(a is == to b)
+print(a is != to 3)
+print(a is > to 3)
+print("a" is < to "b")
+print(not false)
+print(true and false)
+print(true or false)
+
+def var x (int) = none
+print(x is == to none)
+x (int) = 10
+print(x is > to 5)

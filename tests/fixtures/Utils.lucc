@@ -1,0 +1,5 @@
+def var version = "1.0"
+def func helper(name = "World") (str):
+    return "hi {name}"
+
+def list items (str) = ["a", "b"]

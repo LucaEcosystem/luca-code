@@ -1,0 +1,9 @@
+def var version = "1.0"
+def func greet(name = "World") (str):
+    return "hi {name}"
+
+def list tags (str) = ["demo", "modules"]
+def var calls = 0
+def func counted() (int):
+    calls = calls + 1
+    return calls

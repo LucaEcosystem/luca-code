@@ -1,0 +1,13 @@
+def var a = 10
+def var b = 4
+print(a / b)
+print(a + b)
+print(a * b)
+print(a - b)
+print(a % b)
+
+def var x = 20.00
+def var y = 1.50
+print(x + y)
+print(2.50 * 2.00)
+print(0.1 + 0.2)

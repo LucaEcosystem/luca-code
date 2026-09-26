@@ -1,0 +1,33 @@
+def const name (str) = "Luca"
+if name is == to "Luca" then :
+    print("Hello, {name}!")
+else :
+    print("Hello.")
+
+def var score = 85
+if score is >= to 90 then :
+    print("A")
+else if score is >= to 80 then :
+    print("B")
+else if score is >= to 70 then :
+    print("C")
+else :
+    print("F")
+
+def var x = 10
+if x is > to 5 then :
+    if x is < to 20 then :
+        print("nested")
+    print("after inner")
+
+def var y = 5
+if y is == to 5 and true then :
+    print("and true")
+if not false then :
+    print("not false")
+
+def var a = "outer"
+if true then :
+    def var a = "inner"
+    print(a)
+print(a)
