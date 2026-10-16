@@ -1,4 +1,5 @@
 .DS_Store
 /target
+/wasm-host/target/
 *.vsix
 node_modules/
