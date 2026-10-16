@@ -2,7 +2,7 @@
   "name": "luca-code",
   "displayName": "Luca Code (1.0 Beta)",
   "description": "Official language support for Luca Code 1.0 Beta: syntax highlighting, snippets, and one-key run for .lucc files.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "publisher": "luca-ecosystem",
   "license": "SEE LICENSE IN LICENSE",
   "repository": {
