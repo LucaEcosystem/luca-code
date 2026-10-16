@@ -1,5 +1,6 @@
 use crate::{
     error::LucaError,
+    platform::Platform,
     types::{Dec, DictEntry, Value},
 };
 
@@ -40,10 +41,10 @@ pub fn is_native_function(module: &str, member: &str) -> bool {
 
 /// Bare property reads (`System.os`, `System.arch`). Everything else builtin
 /// is a function and must be called.
-pub fn builtin_member_value(module: &str, member: &str) -> Option<Value> {
+pub fn builtin_member_value(module: &str, member: &str, platform: &dyn Platform) -> Option<Value> {
     match (module, member) {
-        ("System", "os") => Some(Value::Str(std::env::consts::OS.to_owned())),
-        ("System", "arch") => Some(Value::Str(std::env::consts::ARCH.to_owned())),
+        ("System", "os") => Some(Value::Str(platform.os().to_owned())),
+        ("System", "arch") => Some(Value::Str(platform.arch().to_owned())),
         _ => None,
     }
 }
@@ -385,53 +386,51 @@ fn file_path(arg: &Value, what: &str, line: usize, column: usize) -> Result<Stri
     expect_str(arg, what, line, column)
 }
 
-fn file_read(args: &[Value], line: usize, column: usize) -> Result<Value, LucaError> {
+fn file_read(platform: &dyn Platform, args: &[Value], line: usize, column: usize) -> Result<Value, LucaError> {
     arg_count(args, 1, "File.read", line, column)?;
     let path = file_path(&args[0], "File.read", line, column)?;
-    std::fs::read_to_string(&path)
+    platform
+        .read_file(std::path::Path::new(&path))
         .map(Value::Str)
         .map_err(|e| LucaError::new(format!("Could not read file '{path}': {e}"), line, column))
 }
 
-fn file_write(args: &[Value], line: usize, column: usize) -> Result<Value, LucaError> {
+fn file_write(platform: &dyn Platform, args: &[Value], line: usize, column: usize) -> Result<Value, LucaError> {
     arg_count(args, 2, "File.write", line, column)?;
     let path = file_path(&args[0], "File.write", line, column)?;
     let content = expect_str(&args[1], "File.write", line, column)?;
-    std::fs::write(&path, content)
+    platform
+        .write_file(std::path::Path::new(&path), &content)
         .map(|()| Value::None)
         .map_err(|e| LucaError::new(format!("Could not write file '{path}': {e}"), line, column))
 }
 
-fn file_append(args: &[Value], line: usize, column: usize) -> Result<Value, LucaError> {
+fn file_append(platform: &dyn Platform, args: &[Value], line: usize, column: usize) -> Result<Value, LucaError> {
     arg_count(args, 2, "File.append", line, column)?;
     let path = file_path(&args[0], "File.append", line, column)?;
     let content = expect_str(&args[1], "File.append", line, column)?;
-    std::fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(&path)
-        .and_then(|mut file| {
-            use std::io::Write;
-            file.write_all(content.as_bytes())
-        })
+    platform
+        .append_file(std::path::Path::new(&path), &content)
         .map(|()| Value::None)
         .map_err(|e| LucaError::new(format!("Could not append to file '{path}': {e}"), line, column))
 }
 
-fn file_exists(args: &[Value], line: usize, column: usize) -> Result<Value, LucaError> {
+fn file_exists(platform: &dyn Platform, args: &[Value], line: usize, column: usize) -> Result<Value, LucaError> {
     arg_count(args, 1, "File.exists", line, column)?;
     let path = file_path(&args[0], "File.exists", line, column)?;
-    Ok(Value::Bool(std::path::Path::new(&path).exists()))
+    Ok(Value::Bool(platform.path_exists(std::path::Path::new(&path))))
 }
 
-fn file_delete(args: &[Value], line: usize, column: usize) -> Result<Value, LucaError> {
+fn file_delete(platform: &dyn Platform, args: &[Value], line: usize, column: usize) -> Result<Value, LucaError> {
     arg_count(args, 1, "File.delete", line, column)?;
     let path = file_path(&args[0], "File.delete", line, column)?;
-    if !std::path::Path::new(&path).exists() {
-        crate::interpreter::warn_at(line, column, &format!("File '{path}' does not exist"));
+    let file = std::path::Path::new(&path);
+    if !platform.path_exists(file) {
+        platform.emit_warning(line, column, &format!("File '{path}' does not exist"));
         return Ok(Value::None);
     }
-    std::fs::remove_file(&path)
+    platform
+        .remove_file(file)
         .map(|()| Value::None)
         .map_err(|e| LucaError::new(format!("Could not delete file '{path}': {e}"), line, column))
 }
@@ -441,9 +440,11 @@ fn system_args(args: &[Value], cli_args: &[String], line: usize, column: usize) 
     Ok(Value::new_list(cli_args.iter().map(|a| Value::Str(a.clone())).collect()))
 }
 
-fn system_env(args: &[Value], line: usize, column: usize) -> Result<Value, LucaError> {
+fn system_env(platform: &dyn Platform, args: &[Value], line: usize, column: usize) -> Result<Value, LucaError> {
     arg_count(args, 0, "System.env", line, column)?;
-    let mut entries: Vec<DictEntry> = std::env::vars()
+    let mut entries: Vec<DictEntry> = platform
+        .env_vars()
+        .into_iter()
         .map(|(key, value)| DictEntry { key, value: Value::Str(value) })
         .collect();
     entries.sort_by(|a, b| a.key.cmp(&b.key));
@@ -472,6 +473,7 @@ fn system_exit(args: &[Value], line: usize, column: usize) -> Result<Value, Luca
 
 /// Dispatch a built-in call. `none` arguments are rejected by the caller.
 pub fn call(
+    platform: &dyn Platform,
     module: &str,
     member: &str,
     args: Vec<Value>,
@@ -495,13 +497,13 @@ pub fn call(
         ("Text", "replace") => text_replace(args, line, column),
         ("Text", "split") => text_split(args, line, column),
         ("Text", "join") => text_join(args, line, column),
-        ("File", "read") => file_read(args, line, column),
-        ("File", "write") => file_write(args, line, column),
-        ("File", "append") => file_append(args, line, column),
-        ("File", "exists") => file_exists(args, line, column),
-        ("File", "delete") => file_delete(args, line, column),
+        ("File", "read") => file_read(platform, args, line, column),
+        ("File", "write") => file_write(platform, args, line, column),
+        ("File", "append") => file_append(platform, args, line, column),
+        ("File", "exists") => file_exists(platform, args, line, column),
+        ("File", "delete") => file_delete(platform, args, line, column),
         ("System", "args") => system_args(args, cli_args, line, column),
-        ("System", "env") => system_env(args, line, column),
+        ("System", "env") => system_env(platform, args, line, column),
         ("System", "exit") => system_exit(args, line, column),
         _ => Err(LucaError::new(format!("Module '{module}' has no member '{member}'"), line, column)),
     }

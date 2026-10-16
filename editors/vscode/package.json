@@ -1,0 +1,86 @@
+{
+  "name": "luca-code",
+  "displayName": "Luca Code (1.0 Beta)",
+  "description": "Official language support for Luca Code 1.0 Beta: syntax highlighting, snippets, and one-key run for .lucc files.",
+  "version": "1.0.1",
+  "publisher": "luca-ecosystem",
+  "license": "SEE LICENSE IN LICENSE",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LucaEcosystem/luca-code.git"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "keywords": [
+    "luca",
+    "lucc"
+  ],
+  "main": "./extension.js",
+  "activationEvents": [
+    "onLanguage:luca"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "luca",
+        "aliases": ["Luca Code", "luca"],
+        "extensions": [".lucc"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "luca",
+        "scopeName": "source.luca",
+        "path": "./syntaxes/luca.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "luca",
+        "path": "./snippets/luca.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "luca.createFile",
+        "title": "Luca: New Luca File"
+      },
+      {
+        "command": "luca.runFile",
+        "title": "Luca: Run Luca File"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "luca.runFile",
+          "when": "editorLangId == luca",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Luca Code",
+      "properties": {
+        "luca.cliPath": {
+          "type": "string",
+          "default": "luca",
+          "description": "Path to the luca CLI. Defaults to 'luca' on your PATH; set an absolute path if the extension cannot find it."
+        },
+        "luca.runInTerminal": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run Luca files in the integrated terminal (familiar output, supports ask input). When off, output goes to the Output > Luca Code channel with clickable error diagnostics instead."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "test": "node --test \"test/*.test.js\""
+  }
+}

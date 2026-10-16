@@ -8,6 +8,7 @@ use crate::{
     ast::{BinaryOp, Block, CompareOp, ContainsMode, Expr, LengthArg, Param, Program, RaiseArg, Statement, UnaryOp},
     error::LucaError,
     lexer, parser,
+    platform::{NativePlatform, Platform},
     types::{values_equal, CollectionKind, Dec, DictEntry, Type, Value},
 };
 
@@ -95,10 +96,24 @@ pub struct Interpreter {
     input_lines: Option<VecDeque<String>>,
     cli_args: Vec<String>,
     loaded_builtins: std::collections::HashSet<String>,
+    platform: Box<dyn Platform>,
 }
 
 impl Default for Interpreter {
     fn default() -> Self { Self::new() }
+}
+
+/// Result of executing a program without terminating the host process.
+///
+/// `Completed` carries the buffered program output of a successful run.
+/// `Exited` carries a `System.exit(code)` request together with all output
+/// produced before the exit, in order. Ordinary runtime errors are not
+/// represented here; they are returned as `Err(LucaError)` with buffered
+/// output discarded, matching the legacy execution APIs.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum RunOutcome {
+    Completed(Vec<String>),
+    Exited { code: i32, output: Vec<String> },
 }
 
 impl Interpreter {
@@ -119,6 +134,7 @@ impl Interpreter {
             input_lines: None,
             cli_args: Vec::new(),
             loaded_builtins: std::collections::HashSet::new(),
+            platform: Box::new(NativePlatform),
         }
     }
 
@@ -140,27 +156,34 @@ impl Interpreter {
         self
     }
 
+    /// Supply the platform implementation backing runtime output and
+    /// warnings. Defaults to [`NativePlatform`]; tests inject a fake.
+    pub fn with_platform(mut self, platform: Box<dyn Platform>) -> Self {
+        self.platform = platform;
+        self
+    }
+
+    /// End-of-input detail reported by [`crate::platform::Platform::read_line`].
+    /// Matched exactly so EOF keeps its frozen diagnostic while every other
+    /// input failure keeps the `Failed to read input:` wrapper.
+    const END_OF_INPUT: &str = "No more input available";
+
     fn read_input_line(&mut self, line: usize, column: usize) -> Result<String, LucaError> {
         if let Some(queue) = self.input_lines.as_mut() {
             queue.pop_front().ok_or_else(|| LucaError::new("No more input available", line, column))
         } else {
-            use std::io::BufRead;
-            let mut buf = String::new();
-            match std::io::stdin().lock().read_line(&mut buf) {
-                Ok(0) => Err(LucaError::new("No more input available", line, column)),
-                Ok(_) => {
-                    while buf.ends_with('\n') || buf.ends_with('\r') {
-                        buf.pop();
-                    }
-                    Ok(buf)
+            match self.platform.read_line() {
+                Ok(line) => Ok(line),
+                Err(error) if error.detail == Self::END_OF_INPUT => {
+                    Err(LucaError::new(Self::END_OF_INPUT, line, column))
                 }
-                Err(e) => Err(LucaError::new(format!("Failed to read input: {e}"), line, column)),
+                Err(error) => Err(LucaError::new(format!("Failed to read input: {error}"), line, column)),
             }
         }
     }
 
     fn warn(&self, message: &str, line: usize, column: usize) {
-        warn_at(line, column, message);
+        self.platform.emit_warning(line, column, message);
     }
 
     fn check_not_iterating(&self, name: &str, line: usize, column: usize) -> Result<(), LucaError> {
@@ -262,13 +285,44 @@ impl Interpreter {
     fn find_function_with_closure(&self, name: &str) -> Option<Rc<Function>> {
         self.find_function(name)
     }
+    /// Outcome of executing a Luca program without terminating the host.
+    ///
+    /// This is the recommended embedding interface: unlike [`Interpreter::run`]
+    /// and [`Interpreter::run_collect`], it never calls `process::exit` and
+    /// never emits captured program output itself. A `System.exit(code)`
+    /// request is returned as `Exited`, letting the host decide how to
+    /// terminate; ordinary runtime errors are returned as `Err` unchanged,
+    /// with buffered output discarded exactly as the legacy APIs do.
+    pub fn run_outcome(&mut self, source: &str) -> Result<RunOutcome, LucaError> {
+        let tokens = lexer::lex(source)?;
+        let program = parser::parse(tokens)?;
+        match self.execute(&program) {
+            Ok(()) => Ok(RunOutcome::Completed(std::mem::take(&mut self.output))),
+            Err(error) if error.is_exit() => Ok(RunOutcome::Exited {
+                code: error.exit_code.unwrap_or(1),
+                output: std::mem::take(&mut self.output),
+            }),
+            Err(error) => Err(error),
+        }
+    }
+    /// Run a program, emitting output and terminating the host on
+    /// `System.exit`, exactly as before.
+    ///
+    /// Transitional behavior, retained for the CLI and existing callers:
+    /// a valid `System.exit(code)` flushes buffered output and then
+    /// terminates the host process instead of returning. New embedding
+    /// code must use [`Interpreter::run_outcome`], which returns the
+    /// request as data. Ordinary errors return `Err` with buffered output
+    /// discarded, unchanged.
     pub fn run(&mut self, source: &str) -> Result<(), LucaError> {
         let tokens = lexer::lex(source)?;
         let program = parser::parse(tokens)?;
         match self.execute(&program) {
             Ok(()) => {
+                // Legacy retention: emit from the retained buffer without
+                // draining it, so repeated calls re-emit earlier lines.
                 for line in &self.output {
-                    println!("{line}");
+                    self.platform.emit_output(line);
                 }
                 Ok(())
             }
@@ -277,25 +331,29 @@ impl Interpreter {
             // with valid input.
             Err(error) if error.is_exit() => {
                 for line in &self.output {
-                    println!("{line}");
+                    self.platform.emit_output(line);
                 }
                 std::process::exit(error.exit_code.unwrap_or(1));
             }
             Err(error) => Err(error),
         }
     }
+    /// Run a program, collecting output, but terminating the host on
+    /// `System.exit`, exactly as before.
+    ///
+    /// Transitional behavior, retained for existing callers: see
+    /// [`Interpreter::run`]. Successful execution returns the buffer
+    /// without emitting it; new embedding code must use
+    /// [`Interpreter::run_outcome`].
     pub fn run_collect(mut self, source: &str) -> Result<Vec<String>, LucaError> {
-        let tokens = lexer::lex(source)?;
-        let program = parser::parse(tokens)?;
-        match self.execute(&program) {
-            Ok(()) => Ok(self.output),
-            Err(error) if error.is_exit() => {
-                for line in &self.output {
-                    println!("{line}");
+        match self.run_outcome(source)? {
+            RunOutcome::Completed(output) => Ok(output),
+            RunOutcome::Exited { code, output } => {
+                for line in &output {
+                    self.platform.emit_output(line);
                 }
-                std::process::exit(error.exit_code.unwrap_or(1));
+                std::process::exit(code);
             }
-            Err(error) => Err(error),
         }
     }
     fn execute(&mut self, program: &Program) -> Result<(), LucaError> {
@@ -1036,7 +1094,7 @@ impl Interpreter {
         let file_name = format!("{name}.lucc");
         for dir in &self.search_paths {
             let candidate = dir.join(&file_name);
-            if candidate.is_file() {
+            if self.platform.is_file(&candidate) {
                 return Ok(candidate);
             }
         }
@@ -1063,7 +1121,7 @@ impl Interpreter {
             return Ok(());
         }
         let path = self.resolve_module_file(name, line, column)?;
-        let source = std::fs::read_to_string(&path)
+        let source = self.platform.read_file(&path)
             .map_err(|e| LucaError::new(format!("Could not read module '{name}': {e}"), line, column))?;
         let tokens = lexer::lex(&source)
             .map_err(|e| LucaError::new(format!("In module '{name}': {}", e.message), e.line, e.column))?;
@@ -1142,7 +1200,7 @@ impl Interpreter {
     fn evaluate_member(&mut self, base: &Expr, member: &str, line: usize, column: usize) -> Result<Value, LucaError> {
         if let Expr::Variable { name: base_name, .. } = base {
             if self.loaded_builtins.contains(base_name) {
-                if let Some(value) = crate::stdlib::builtin_member_value(base_name, member) {
+                if let Some(value) = crate::stdlib::builtin_member_value(base_name, member, self.platform.as_ref()) {
                     return Ok(value);
                 }
                 if crate::stdlib::is_native_function(base_name, member) {
@@ -1211,7 +1269,7 @@ impl Interpreter {
                 column,
             ));
         }
-        crate::stdlib::call(module_name, member, values, &self.cli_args, line, column)
+        crate::stdlib::call(self.platform.as_ref(), module_name, member, values, &self.cli_args, line, column)
     }
 
     fn call_module_function(&mut self, module_name: &str, func_name: &str, args: &[Expr], line: usize, column: usize) -> Result<Value, LucaError> {
@@ -2583,10 +2641,6 @@ fn parse_dec_input(trimmed: &str) -> Result<Dec, String> {
         dec = dec.neg().ok_or_else(|| "Decimal input is out of range".to_owned())?;
     }
     Ok(dec)
-}
-
-pub(crate) fn warn_at(line: usize, column: usize, message: &str) {
-    eprintln!("Warning at {line}:{column}: {message}");
 }
 
 fn in_module_error(module_name: &str, error: LucaError) -> LucaError {

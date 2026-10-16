@@ -220,3 +220,174 @@ Deferred gaps for 1.0 Beta (unspecified in the reference; recorded rather than g
 - Empty-separator `split` / empty-pattern `replace` follow Rust `str` semantics (unspecified edge)
 - `System.exit` in expression position terminates identically (no value semantics; only direct statements warn unreachable)
 - Uncaught-error output buffering (pre-existing: buffered prints flush only on success or exit, not on uncaught errors)
+
+## Distribution readiness (1.0 Beta, 2026-09-26)
+
+First-run experience work (CLI install, VS Code extension, docs, CI). The verified language implementation is untouched except a CLI-only `--help`/`--version` addition (`src/main.rs`, no language-syntax change); 39-test suite and strict Clippy still green.
+
+What was built:
+
+- Terminal install: `scripts/install.sh` (macOS/Linux) and `scripts/install.ps1` (Windows) — Rust auto-install via rustup, local-checkout or clone mode, always-`--force` so re-running upgrades, `luca --version` self-check, copy-paste `PATH` fix on failure. `luca --version` prints `luca 1.0 Beta`; `luca --help` prints usage (exit 0); usage/extension errors stay exit 2.
+- VS Code extension (`editors/vscode/`, zero runtime dependencies): `.lucc` TextMate grammar, 10 snippets (`try`, `error`, `raise`, `func`, `if`, `for`, `while`, `ask`, `import`, `print`), `Luca: New Luca File` / `Luca: Run Luca File` commands with title-bar run button, `luca.cliPath` setting with `PATH` discovery, two run modes — integrated terminal by default (`luca.runInTerminal`, supports `ask` input) or **Output > Luca Code** channel with `Error/Warning at line:column` → editor diagnostics. 10 `npm test` unit tests (manifest wiring, grammar regexes, diagnostics parsing, CLI discovery, run-command quoting).
+- Docs: `docs/install.md` (install/upgrade/uninstall per OS), `docs/first-program.md` (verified outputs), `docs/vscode.md` (setup/usage), `docs/troubleshooting.md`, README entry section.
+- CI (`.github/workflows/ci.yml`, runs on push to `main` + PRs, publishes nothing): Rust test+Clippy+example smoke on ubuntu/macos/windows; install-script syntax + full checkout install on all three OSs; extension `npm test` + `vsce package` with `.vsix` artifact upload.
+
+Local vs CI verification ledger:
+
+| Check | Local (this Mac, arm64) | CI (on push) |
+|---|---|---|
+| `cargo test` 39 passed, Clippy clean | verified | ubuntu + macOS + Windows runners |
+| `install.sh`: syntax, fresh install, upgrade re-run, PATH-hint (exit 1), uninstall round-trip | verified (sandboxed `CARGO_HOME`) | ubuntu + macOS runners |
+| `install.ps1` | syntax reviewed only (no `pwsh` locally) | Windows runner (parse + full install) |
+| Extension `npm test` 9 passed, `vsce package`, real VS Code 1.139.1 sandbox install/uninstall | verified | ubuntu runner (`npm test` + package) |
+| In-editor UX (highlight colors, run button, diagnostics display) | not verified headless | not covered — manual launch checklist |
+| `cargo install` release build | verified (macOS arm64) | ubuntu + macOS + Windows via scripts job |
+
+Placeholders (swept 2026-09-30; repository visibility still to flip for anonymous clone):
+
+- All `<OWNER>` URLs now point at `https://github.com/LucaEcosystem/luca-code` (`scripts/install.sh`, `scripts/install.ps1`, `docs/install.md`, `editors/vscode/*`, `editors/vscode/package.json` repository URL).
+- Extension publisher is set (`luca-ecosystem` in `editors/vscode/package.json`).
+- License decided and added: custom proprietary free-use `LICENSE` at the repo root (free use incl. commercial; no modification, redistribution, or resale; programs users write are theirs). Extension manifest points at it.
+
+Packaging-version constraint (reported, not changed): the product identity stays `1.0 Beta` (`Cargo.toml` 1.0.0 + `PRODUCT_VERSION = "1.0 Beta"`, CLI prints `luca 1.0 Beta`). The VS Code package version is semver `1.0.x` because vsce/Marketplace require numeric `major.minor.patch` and reject re-uploading an existing version — hence `1.0.1` for the placeholder-sweep republish with zero behavior change; the Beta identity is carried in the extension `displayName`/`description` and produced artifact `luca-code-1.0.1.vsix`.
+
+Manual launch checklist (before public release/tag or any publish):
+
+1. Flip repository visibility (anonymous clone still needs this), choose-license done, placeholders swept.
+2. Push; confirm all three CI jobs green (first real Windows + Linux evidence).
+3. In VS Code with the packaged `.vsix`: confirm highlighting on `examples/errors.lucc`, run-button flow, an error diagnostic jump, and the missing-CLI guidance.
+4. Publish the extension to the Marketplace and tag the release only after 1–3.
+
+## M1a validation API + `luca check` (approved SDK step, no semantics change)
+
+Read-only validation without executing application code. `run` behavior, language semantics, and diagnostic wording are unchanged.
+
+What was built:
+
+- Library API (`src/check.rs`, re-exported from `src/lib.rs`): `check_source(&str) -> Vec<CheckDiagnostic>` (lex + parse only), `check_file(&Path, &[PathBuf]) -> Result<Vec<CheckDiagnostic>, CheckFailure>` (plus recursive `import` resolve/read/lex/parse with builtin precedence, once-only, `Circular import` guard, depth/file caps), `CheckDiagnostic{message,line,column}` with `Error at line:column` Display, `diagnostics_to_json` stable `[{"message","line","column"}]` with hand-rolled escaping (zero new dependencies).
+- CLI (`src/main.rs`): `luca check <program.lucc> [--format human|json]` (`--format=json` also accepted). Exit 0 valid (JSON prints `[]`), 1 validation errors, 2 usage/internal failure (`luca check:` stderr prefix, never JSON). `search_paths` match `luca run` (program-dir + CWD). `run` path untouched.
+- Guarantees: check never calls `execute`, `stdlib::call`, `stdin().read_line`, `println` (application output), or `process::exit` on behalf of source code. Imports are resolved and parsed only; module top-levels never run.
+- Tests (`tests/check.rs`, 13 tests + 2 `check.rs` unit tests): valid source/file, syntax and lexer errors with locations, missing/nested/circular imports, `In module` wrapping, builtin pass-through, side-effect pass-through (`ask`/`print`/`File.write`/`System.exit` validate clean and create nothing), internal-vs-validation distinction, JSON stability/escaping.
+- Limits: dynamic checks still require execution (call arity on runtime values, division by zero on computed values, `ask` conversion, declaration type checks on runtime values, import-name scope collisions). `check` covers syntax plus the import graph only.
+
+## M1b-1 Platform interface (additive foundation, no behavior change)
+
+The `Platform` interface and its implementations have been introduced. Runtime call sites have not yet migrated. This milestone makes no runtime behavior changes.
+
+What was built:
+
+- `src/platform.rs` (new, re-exported from `src/lib.rs`): `PlatformErrorKind` (`NotFound`/`PermissionDenied`/`InvalidInput`/`Unsupported`/`Other`), `PlatformError{kind,detail}` with `from_io` (kind mapping + complete `io::Error` Display preserved in `detail`, including OS error information) and `unsupported` constructors, the `Platform` trait (file read/write/append/delete/existence, runtime output/warnings sinks, input line, environment variables, OS/architecture, working directory), `NativePlatform` (delegates to the exact `std::` calls the interpreter uses today), and `FakePlatform` (per-instance scripted files/errors, environment, input queue, captured output/warnings, OS/arch and working-directory overrides; no global state).
+- Every trait method documents the historical call it mirrors and the compatibility contract later migrations must preserve (frozen diagnostic text via `detail`, lossy `false`-on-error existence probes, infallible output/warning sinks, unsorted environment passthrough, unchanged silent working-directory fallbacks).
+- Tests (7 unit tests in `src/platform.rs`): `from_io` kind mapping and detail preservation (including `os error 2`), native OS/architecture/working-directory parity, native missing-file `NotFound`, fake scripted files/failures/input/environment/output/identity, and two-instance isolation.
+- Limits: the interface is unused — `interpreter.rs`, `stdlib.rs`, `main.rs`, and `check.rs` are untouched. Legacy terminating APIs (`run`, `run_collect`, `run_with_input`) are unchanged for now; the planned safe outcome API and their migration remain future work (M1b-3). Platform independence and safe embedding are not complete.
+
+## M1b-2 Output/warning migration (no semantics change)
+
+Interpreter runtime output and warnings now flow through the `Platform` abstraction. Existing public execution and `System.exit` behavior remain unchanged.
+
+What was built:
+
+- `FakePlatform` (`src/platform.rs`): state moved into a private shared owner so `Clone` shares observations between clones while independently created instances stay isolated (`Rc`-based, standard library only). Public method signatures unchanged; existing unit tests unmodified, plus a clone-sharing test.
+- `src/interpreter.rs`: new `platform: Box<dyn Platform>` field (no generics), defaulting to `NativePlatform` in `new()` so every existing constructor chain (`run`, `run_with_input`, CLI, tests, `Default`) behaves exactly as before, plus a `with_platform` constructor for injection. `warn()` forwards to `emit_warning`; the three output-flush loops in `run`/`run_collect` forward to `emit_output`. `run_collect()` successful execution still returns buffered output without emitting it. Every `System.exit` check and `process::exit` call is untouched, as is `warn_at` with its remaining `stdlib.rs` `File.delete` caller.
+- Tests (`tests/output.rs`, 13 tests): print/`ask` ordering, unreachable-code locations, out-of-range/missing-key reads with `none` results, literal and `.add` duplicate warnings, remove-miss warnings, the `run_collect` buffer-without-emit contract, all with exact line/column/message expectations verified against the implementation.
+- Limits: input, filesystem, module resolution, environment, OS/architecture, and working-directory handling still call `std::` directly. The `File.delete` warning migrates with the filesystem natives (M1b-5). Luca Code is not yet platform-independent or safe for embedding; the outcome API remains future work (M1b-3).
+
+## M1b-3 Non-terminating outcome API + CLI ownership (no semantics change)
+
+Library consumers can now execute programs containing `System.exit(N)` without the library terminating the host process. Language semantics, diagnostic wording, and the exit marker mechanism are unchanged.
+
+What was built:
+
+- `RunOutcome` (`src/interpreter.rs`, re-exported from `src/lib.rs`): `Completed(Vec<String>)` for successful runs, `Exited { code, output }` for `System.exit` requests. `run_outcome(&mut self, source)` shares the existing lex/parse/execute path (all propagation sites untouched), drains the output buffer into the owned outcome, and never calls `process::exit` or emits captured output. Ordinary errors return `Err` with buffered output discarded, exactly as before.
+- Legacy `run`, `run_collect`, and `lib::run`/`run_with_input` keep their signatures and observable behavior, reimplemented as thin wrappers over the outcome core, with doc comments marking them transitional (host-terminating on valid exit; new embedding code must use `run_outcome`). No deprecation attributes, so all callers stay warning-free.
+- CLI (`src/main.rs`, run path only): translates the outcome itself — prints captured output, exits with the requested code, reports ordinary errors to stderr with exit 1. `luca check` untouched.
+- Tests (`tests/exit.rs`, 6 tests): in-process `Exited` with code and pre-exit buffer, runner alive, no direct emission; `Completed`; ordinary-error discard; exit in functions, module init (identity preserved), and `try`/`finally` (finally runs, capture skipped). (`tests/cli.rs`, 10 tests): subprocess runs via `CARGO_BIN_EXE_luca` in RAII-cleaned temp dirs asserting exact status/stdout/stderr — success, exit-after-output, exit in function/module/finally, ordinary-error discard with exact stderr bytes, usage errors, and `check` valid/invalid/missing coverage (closes M1a F1).
+- Limits: input, filesystem, modules, environment, OS/architecture, and working-directory handling still call `std::` directly (M1b-4/M1b-5). Embedding remains transitional until callers migrate off the legacy APIs.
+
+## M1b-4 Input migration (no semantics change)
+
+Interpreter `ask` input now flows through the `Platform` abstraction. Prompt buffering, output ordering, source locations, conversion behavior, and all diagnostics are unchanged.
+
+What was built:
+
+- `read_input_line` (`src/interpreter.rs`): the direct stdin branch now delegates to `Platform::read_line()`. The scripted `with_input` path is untouched and still takes precedence. End of input maps to the frozen `No more input available` diagnostic (anchored on the documented platform detail string); every other input failure maps to the frozen `Failed to read input: {detail}` wrapper, with `detail` rendering byte-identically to the former `io::Error` text. The now-unused `BufRead` import was removed.
+- Tests (`tests/output.rs`, 5 new): platform-provided normal line with prompt ordering, empty-input EOF with exact `1:24` diagnostic, generic and `PermissionDenied` input errors with exact `1:24` wrapper diagnostics (proving EOF is never conflated), and prompt-before-result ordering with type conversion. Error paths additionally pin the pre-existing discard rule (buffered prompt not emitted).
+- Limits: filesystem, module resolution, environment, OS/architecture, and working-directory handling still call `std::` directly (M1b-5). The `Platform` public contract is unchanged.
+
+## M1b-5 Filesystem + module loading (no semantics change)
+
+Runtime file operations and module loading now flow through the `Platform` abstraction, enabling fully deterministic tests. Language semantics, diagnostic wording, and warning behavior are unchanged.
+
+What was built:
+
+- **B1 — file detection + module loading.** `Platform::is_file()` added (native `Path::is_file` semantics; fakes report in-memory files only), plus `FakePlatform::add_dir()` so scripted directories satisfy `path_exists` without ever satisfying `is_file`. `resolve_module_file` probes candidates via `is_file` (a directory named `X.lucc` still resolves to `missing module`), and `import_module` reads sources via `read_file` with identical `Could not read module` mapping. Tests (`tests/modules.rs`, 12 tests): successful/repeated imports, missing/unreadable modules with locations, directory-`.lucc` rejection, circular/nested imports, search-path ordering, `In module` wrapping, builtin precedence — all against scripted files, no host I/O.
+- **B2 — standard-library operations.** `File.read/write/append/exists/delete`, `System.env`, and `System.os/arch` now use the injected platform, threaded through `call_native_function → stdlib::call` and `builtin_member_value` (each with exactly one caller). Frozen messages render byte-identically via error `detail`; environment sorting stays in the caller; `File.delete`-missing still warns at the statement location and returns `none`, now via `emit_warning`. The last `warn_at` caller is gone, so the helper was removed. Tests (`tests/files.rs`, 8 tests): round-trips, append-create, existence, delete + missing warning capture, scripted error mapping for all four mutating reads, sorted env display, OS/arch overrides, pure-dispatch sanity, outcome carriage.
+- Compatibility note: one M1b-3 test mixed an injected (empty) fake with real temp-dir module files; it now scripts its module into the fake instead — same exit-identity assertion, fully hermetic. All pre-existing temp-file tests stay green unmodified as native-parity evidence.
+- Limits: constructor/CLI working-directory handling, `check.rs` validation I/O, and `System.args` (already injected data) intentionally still use `std::` directly. No new dependencies; Luca UI untouched.
+
+## M2 Embedding-safe SDK surface
+
+Pluggable validation, a legacy-API compatibility decision, and a host contract — no language-semantic changes.
+
+What was built:
+
+- **B1 — pluggable validation filesystem.** Additive `check_file_with_platform(entry, search_paths, platform)`; `check_file` delegates with `NativePlatform`, behavior unchanged. Import traversal (`resolve_module_file`, source reads) routes through the injected filesystem. Unsaved buffers without a path remain syntax-only via `check_source` (documented limitation, not built). Tests (`tests/check_platform.rs`, 11 tests): scripted lookup, missing/nested/circular imports, `.lucc` directories rejected, unreadable-module detail, `In module` wrapping, entry-failure distinction, builtin precedence, native-parity and JSON shape.
+- **B2 — legacy termination compatibility (assessment only, no code change).** `#[deprecated]` is deliberately withheld: this repo's CI and Luca UI's CI both deny warnings, so deprecation would break builds here (dozens of test call sites) and in Luca UI (`seam.rs` uses `run`/`run_with_input`), which must not be edited from this repo. Legacy APIs keep exact behavior with transitional-debt docs; `run_outcome` is the documented embedding API (also referenced from `docs/host-requirements.md`). Recorded as deferred work pending coordinated migration.
+- **B3 — host contract + target spike.** New `docs/host-requirements.md`: per-capability host obligations, synchronous/input/output/module-resolution contracts, `run_outcome`-vs-legacy distinction, per-host (desktop/WASM/Android) requirements, and implemented-vs-future inventory. WASM experiment 2026-10-16: `cargo check --target wasm32-unknown-unknown` fails with `E0463` (target std not installed; only `aarch64-apple-darwin` present); installing it requires downloads and was out of scope. No WASM support claimed.
+- Limits: no language, diagnostic, CLI-behavior, or public-signature changes; no dependencies; nothing committed.
+
+## M3 WASM host spike (experimental, no semantics change)
+
+First non-native host: `luca-code` compiles for `wasm32-unknown-unknown`
+with zero source changes, and a minimal host executes scripted programs
+in Node through a narrow C ABI. Language semantics and frozen diagnostics
+are unchanged.
+
+What was built:
+
+- **B1 — compile gate.** `cargo check --target wasm32-unknown-unknown --lib`
+  passes with no code changes (local toolchain extended with the target
+  std; no project configuration changed). `luca-code` keeps its `rlib`
+  shape; no `cdylib` was added to it.
+- **B2 — host + boundary (`wasm-host/`, crate `luca-wasm-host`,
+  `cdylib`, zero new dependencies).** Consumes `luca-code` public API
+  only. Opaque-handle hosts (`Box` pointer as `usize`, no globals) with
+  an in-memory `Platform` (scripted files/dirs, denied-vs-queued input
+  via `Unsupported`, captured output/warnings, `web`/`wasm32` labels,
+  virtual root `/`). Narrow ABI: alloc/free with exact-size pairing,
+  setup calls returning `0`/`-1`/`-2`/`-3`, `luca_run`/`luca_check`
+  returning length-explicit JSON documents parsed by built-in JSON
+  support (hand-rolled output escaping only; no custom parser, no
+  request JSON). All argument validation is explicit; panics cannot
+  unwind across the boundary by construction.
+- **B3 — Node integration (`wasm-host/smoke.mjs`, 13 tests)** against the
+  real artifact: execution ordering, exit-as-data with a live Node,
+  virtual imports + missing/dir rejection, queued and denied input,
+  per-call output/warning isolation, invalid-handle/UTF-8 robustness,
+  alloc/run/free cycles, and `check` over scripted graphs.
+- **B4 — CI + docs.** New `wasm` CI job (target install, lib check, host
+  build + deny-warnings lint, Node smoke on ubuntu); `host-requirements.md`
+  updated with the actual contract. No browser UI, no npm package.
+- Limits: experimental spike only — no supported WASM product status, no
+  async-input bridge beyond queue-or-deny, no Android/LSP work.
+
+## Runtime host-behavior notes (specified, not deferred)
+
+- **Working directory.** `Interpreter::new()` (`src/interpreter.rs:121`)
+  seeds default module search paths with the process working directory,
+  falling back to `"."` when the directory cannot be read; the fallback
+  is silent by design. The CLI (`src/main.rs`) builds search paths from
+  the program's own directory first, then the working directory (skipped
+  silently when unreadable, deduplicated). Library embedders that inject
+  explicit search paths via `with_search_paths` bypass both behaviors.
+- **Iteration and fuel.** Function recursion is bounded (`recursion_limit`
+  64, `src/interpreter.rs:128`; exceeding it is a capturable
+  `Recursion limit exceeded` error). Loop steps are not bounded: `while`
+  loops and large `for N times` counts run until completion, and deep
+  non-cyclic import chains have no file-count cap in the interpreter
+  (`luca check` caps its own traversal at 100 files / depth 32,
+  `src/check.rs:31-35`, because validation must terminate on adversarial
+  input). Numeric overflow is always a proper error (`Integer overflow`,
+  `Decimal result is out of range`), never a wrap or panic. Hosts that
+  need execution bounds (timeouts, step budgets) must enforce them
+  outside the interpreter.

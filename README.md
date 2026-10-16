@@ -2,6 +2,15 @@
 
 Luca Code 1.0 Beta is the feature-complete Beta: input (`ask`), the `Math`/`Text`/`File`/`System` standard library, CLI integration, and custom-error raising (`raise`) with caught-error inspection, keeping the Rust reference implementation (lexer → parser → AST → type checking → interpreter) before a native backend.
 
+## Install and first run
+
+```sh
+bash scripts/install.sh   # macOS/Linux (.\scripts\install.ps1 on Windows)
+luca --version            # prints: luca 1.0 Beta
+```
+
+Beginner guides: [install / upgrade / uninstall](docs/install.md), [your first program](docs/first-program.md), [VS Code setup](docs/vscode.md), [troubleshooting](docs/troubleshooting.md). The VS Code extension lives in `editors/vscode/`.
+
 ## Run an example
 
 ```sh
@@ -19,9 +28,13 @@ cargo run -- examples/integration.lucc
 printf 'Luca\n16\n' | cargo run -- examples/ask.lucc
 cargo run -- examples/stdlib.lucc
 cargo run -- examples/stdlib.lucc extra args here
+cargo run -- check examples/hello.lucc
+cargo run -- check examples/hello.lucc --format json
 cargo test
 cargo clippy --all-targets --all-features -- -D warnings
 ```
+
+`luca check <file.lucc> [--format human|json]` validates a program without executing it: syntax plus the transitive `import` graph (missing/circular/unreadable modules, syntax errors inside imports). It never runs application code — no prompts, no `print` output, no `File` mutations, no `System.exit` termination. Exit codes: 0 valid, 1 validation errors, 2 usage/internal failure (`luca check:` prefix, never JSON).
 
 The CLI accepts Luca source files with the `.lucc` extension (`cargo run -- <file.lucc>` enforces the extension). Module imports (`import Name` → `Name.lucc`) resolve from the program directory first, then the working directory.
 
@@ -33,11 +46,12 @@ The CLI accepts Luca source files with the `.lucc` extension (`cargo run -- <fil
 - `src/types.rs` — types (`int`, `dec` exact, `str`, `bool`, `uni`, `none`, `CollectionKind`, `DictEntry`, `values_equal` content equality) and runtime values (shared collections)
 - `src/interpreter.rs` — evaluation and output (scoped `scopes`/`func_scopes`/`error_scopes`, `call_depth:64`, `loop_depth`/`iterating`, `BindingType::Scalar`/`Collection`, module cache `modules`/`loading`/`search_paths`, scripted/stdin `input_lines`, CLI `cli_args`, `import_module`/`call_module_function`/`call_native_function`, `execute_try`/`execute_error_def`/`exec_raise` with `error_value` on `LucaError`, warnings via `Warning at line:column`)
 - `src/stdlib.rs` — built-in `Math`/`Text`/`File`/`System` (exact `dec` math, strict types, `none` rejection)
-- `src/main.rs` — CLI (program-directory + working-directory module search paths, full argv for `System.args`)
+- `src/check.rs` — read-only validation (`check_source`/`check_file`, `CheckDiagnostic` with `Error at line:column` Display, stable `diagnostics_to_json`); resolves imports but never executes, prompts, prints, mutates files, or exits
+- `src/main.rs` — CLI (program-directory + working-directory module search paths, full argv for `System.args`, `check` subcommand for execution-free validation with human/JSON diagnostics)
 - `examples/` — runnable Luca programs (`hello.lucc`, `arithmetic.lucc`, `inference.lucc`, `comparison.lucc`, `conditional.lucc`, `functions.lucc`, `loops.lucc`, `collections.lucc`, `modules/main.lucc` + `modules/helpers.lucc`, `errors.lucc`, `integration.lucc`, `ask.lucc`, `stdlib.lucc`)
-- `tests/` — interpreter behavior checks (39 tests incl. `ask`, stdlib, cross-feature integration, `10/4→2.5`, custom-error raising/inspection)
+- `tests/` — interpreter behavior checks (39 tests incl. `ask`, stdlib, cross-feature integration, `10/4→2.5`, custom-error raising/inspection), `check` validation tests, platform/output/exit/module/file CLI tests, and Node integration tests for the experimental WASM host (129 Rust tests + 13 Node tests total)
 - `docs/language-spec.md` — 0.1–1.0 implemented language and boundary
 - `docs/locked-language-reference.md` — full locked reference (authoritative)
 - `docs/implementation-status.md` — checklist per release; 1.0 Beta verified 2026-09-26
 
-0.9 completes the locked set: `ask "question"` with declared-type conversion (invalid input is a capturable Error), `Math`/`Text`/`File`/`System` built-ins through `import` (strict types, `none` rejection, exact `dec` math without `f64`), CLI integration (exit codes with flushed output, `System.args` wiring, `System.exit` unreachable warnings), plus all of 0.8's stabilized foundation with actionable `Error at line:column` diagnostics. The one open design item is custom-error raising/inspection, for which the reference defines no syntax.
+1.0 Beta closes the locked set: custom-error raising (`raise Name(...)` with required parentheses, field overrides, and caught-error inspection including `line`/`column`) completes the 0.9 foundation above. See `docs/implementation-status.md` for the per-release checklist (verified 2026-09-26).
