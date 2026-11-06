@@ -1,0 +1,4 @@
+print("once init")
+def var n = 41
+def func get() (int):
+    return n

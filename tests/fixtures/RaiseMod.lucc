@@ -1,0 +1,8 @@
+def error Boom :
+    code = 99
+    message = "bang"
+
+def func explode():
+    raise Boom()
+
+def var v = 1

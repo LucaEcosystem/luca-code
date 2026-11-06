@@ -1,0 +1,10 @@
+.DS_Store
+/target
+/wasm-host/target/
+*.vsix
+node_modules/
+
+# Internal engineering documentation — kept local, not published to GitHub
+/AGENTS.md
+/OPENCODE_BUILD_PROMPT.md
+/docs/contributor/

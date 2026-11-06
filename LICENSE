@@ -1,0 +1,28 @@
+Luca Code License, Version 1.0 Beta
+
+Copyright (c) 2026 Luca Ecosystem. All rights reserved.
+
+Permission is granted, free of charge, to any person obtaining a copy of
+this software (the "Software") to USE it, including:
+
+  1. Running the Software for any purpose, personal or commercial.
+  2. Writing, running, and owning programs you create with it. Programs
+     you write in Luca Code are yours and are not covered by this license.
+
+The following are PROHIBITED without prior written permission from
+Luca Ecosystem:
+
+  1. Modifying the Software or creating modified versions of it.
+  2. Redistributing, republishing, or reselling the Software itself,
+     in whole or in part, whether modified or unmodified, alone or
+     bundled, for free or for payment.
+  3. Sublicensing the Software or presenting it as your own product.
+
+This license covers the Luca Code interpreter and CLI, the official
+VS Code extension, examples, and documentation in this repository.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
+IN NO EVENT SHALL LUCA ECOSYSTEM BE LIABLE FOR ANY CLAIM, DAMAGES, OR
+OTHER LIABILITY ARISING FROM THE USE OF THE SOFTWARE.

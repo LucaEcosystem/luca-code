@@ -1,0 +1,39 @@
+def list names (str) = ["Luca", "Alex"]
+print(names)
+print(names[1])
+print(names.length)
+print(names.contains("Luca"))
+names.add("Sam")
+print(names)
+names.remove("Luca")
+print(names)
+
+def tuple data (uni) = (123, true, "Luca")
+print(data)
+print(data[3])
+change data[1] = 456
+print(data)
+
+def set labels (str) = {"alpha", "stable"}
+print(labels)
+print(labels.contains("alpha"))
+labels.add("beta")
+print(labels)
+
+def dict person = {"Name" = "Luca" (str), "Age" = 16 (int)}
+print(person)
+print(person["Name"])
+print(person.contains(key = "Age"))
+print(person.contains(value = 16))
+person.add("City", "Berlin")
+print(person)
+change person["Age"] = 17
+print(person)
+
+for item from names repeat :
+    print(item)
+
+print(names is == to ["Alex", "Sam"])
+def var price = 20.00
+print(price.length(decimals))
+print(names.length(items))

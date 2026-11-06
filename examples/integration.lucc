@@ -1,0 +1,32 @@
+def func safe_total(values) :
+    def var total = 0.00
+    for item from values repeat :
+        try to :
+            total = total + item
+        capture error :
+            print("skipped {item}")
+    return total
+
+def list readings (uni) = [10, 20.50, "oops", 5]
+print(safe_total(readings))
+
+def var threshold = 10.00
+def var over = 0
+for r from readings repeat :
+    try to :
+        if r is > to threshold then :
+            over = over + 1
+    capture error :
+        print("skipped {r}")
+print("{over} over {threshold}")
+
+def dict config = {"retries" = 3 (int)}
+change config["retries"] = 5
+print(config)
+print(config is == to {"retries" = 5 (int)})
+
+try to :
+    change readings[99] = 1
+capture error :
+    print("no crash")
+print("done")

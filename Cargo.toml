@@ -1,0 +1,15 @@
+[package]
+name = "luca-code"
+version = "1.0.3"
+edition = "2021"
+license-file = "LICENSE"
+
+[dependencies]
+
+[lib]
+name = "luca_code"
+path = "src/lib.rs"
+
+[[bin]]
+name = "luca"
+path = "src/main.rs"

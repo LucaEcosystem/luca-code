@@ -1,0 +1,3 @@
+def var base_val = 10
+def func base_fn() (int):
+    return base_val + 5

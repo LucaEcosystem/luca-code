@@ -1,0 +1,51 @@
+try to :
+    print(10 / 0)
+capture error :
+    print("caught division")
+finally :
+    print("cleanup")
+
+try to :
+    print("no trouble")
+capture error :
+    print("not shown")
+finally :
+    print("always")
+
+def error NotFound :
+    code = 404
+    message = "gone"
+
+try to :
+    try to :
+        print(missing_value)
+    finally :
+        print("inner finally")
+capture error :
+    print("outer caught")
+
+def func safe_div(a (int), b (int)):
+    try to :
+        return a / b
+    capture error :
+        return 0
+
+print(safe_div(10, 2))
+print(safe_div(10, 0))
+
+def error ServiceDown :
+    code = 503
+    message = "unavailable"
+
+try to :
+    raise ServiceDown()
+capture error :
+    print(error["code"])
+    print(error["message"])
+    print(error["line"])
+
+try to :
+    raise ServiceDown(code = 500, message = "boom")
+capture error :
+    print(error["code"])
+    print(error["message"])

@@ -1,0 +1,8 @@
+def const name (str) = "Luca"
+def var visits (int) = 1
+visits (int) = visits + 1
+
+print("Hello, {name}!")
+print("Visit {visits}")
+print("Six divided by two is:")
+print(6 / 2)

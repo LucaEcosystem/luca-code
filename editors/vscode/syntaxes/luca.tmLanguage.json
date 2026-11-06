@@ -1,0 +1,120 @@
+{
+  "name": "Luca Code",
+  "scopeName": "source.luca",
+  "fileTypes": ["lucc"],
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#keywords" },
+    { "include": "#declarations" },
+    { "include": "#annotations" },
+    { "include": "#constants" },
+    { "include": "#members" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-dash.luca",
+          "match": "--.*$"
+        },
+        {
+          "name": "comment.block.luca",
+          "begin": "\\[\\[",
+          "end": "\\]\\]"
+        }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.luca",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.luca",
+          "match": "\\\\."
+        },
+        {
+          "name": "variable.interpolation.luca",
+          "match": "\\{[A-Za-z_][A-Za-z0-9_]*\\}"
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.decimal.luca",
+          "match": "\\b\\d+\\.\\d+\\b"
+        },
+        {
+          "name": "constant.numeric.integer.luca",
+          "match": "\\b\\d+\\b"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.luca",
+          "match": "\\b(if|then|else|for|while|times|repeat|from|stop|skip|try|to|capture|finally|error|raise|return|import)\\b"
+        },
+        {
+          "name": "keyword.operator.word.luca",
+          "match": "\\b(and|or|not|is|to)\\b"
+        },
+        {
+          "name": "keyword.declaration.luca",
+          "match": "\\b(def|const|var|func|list|tuple|set|dict|change|forget|clear)\\b"
+        },
+        {
+          "name": "keyword.input.luca",
+          "match": "\\b(ask|print)\\b"
+        }
+      ]
+    },
+    "declarations": {
+      "patterns": [
+        {
+          "name": "meta.definition.error.luca",
+          "match": "\\b(def)\\s+(error)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": { "name": "keyword.declaration.luca" },
+            "2": { "name": "keyword.control.luca" },
+            "3": { "name": "entity.name.type.luca" }
+          }
+        },
+        {
+          "name": "meta.definition.function.luca",
+          "match": "\\b(def)\\s+(func)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": { "name": "keyword.declaration.luca" },
+            "2": { "name": "keyword.declaration.luca" },
+            "3": { "name": "entity.name.function.luca" }
+          }
+        }
+      ]
+    },
+    "annotations": {
+      "name": "storage.type.luca",
+      "match": "\\((int|dec|str|bool|uni)\\)"
+    },
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.language.luca",
+          "match": "\\b(true|false|none)\\b"
+        }
+      ]
+    },
+    "members": {
+      "patterns": [
+        {
+          "name": "entity.name.function.member.luca",
+          "match": "\\.[A-Za-z_][A-Za-z0-9_]*"
+        }
+      ]
+    }
+  },
+  "uuid": "7f3a2b1c-9d4e-4f5a-8b6c-1a2b3c4d5e6f"
+}
