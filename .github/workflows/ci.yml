@@ -22,10 +22,15 @@ jobs:
         run: cargo test
       - name: Clippy (deny warnings)
         run: cargo clippy --all-targets --all-features -- -D warnings
+      - name: Documentation builds
+        run: cargo doc --no-deps
       - name: Example smoke
         run: |
           cargo run --quiet -- examples/hello.lucc
           cargo run --quiet -- examples/errors.lucc
+          cargo run --quiet -- examples/text.lucc
+          cargo run --quiet -- examples/math.lucc
+          cargo run --quiet -- examples/utility.lucc
 
   scripts:
     name: Install scripts (${{ matrix.os }})
