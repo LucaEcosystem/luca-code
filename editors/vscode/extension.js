@@ -3,6 +3,7 @@
 // Commands:
 //   luca.createFile - open a new .lucc file with a starter program
 //   luca.runFile    - save and run the active .lucc file with the luca CLI
+//   luca.checkFile  - save and validate the active file (syntax + imports)
 //
 // The CLI is discovered via the `luca.cliPath` setting (default "luca" on
 // PATH). `Error at line:column:` / `Warning at line:column:` output becomes
@@ -65,10 +66,43 @@ function findOnPath(name, envPath) {
 }
 
 /**
+ * Parse `luca check --format json` output into diagnostics.
+ *
+ * The CLI emits a JSON array `[{"message":"...","line":N,"column":M}]`, or
+ * nothing/`[]` when the file is valid. Malformed output throws so the caller
+ * can surface a CLI/internal failure instead of silently showing no problems.
+ * Returns [{ kind: "error", line (1-based), column (1-based), message }].
+ */
+function parseCheckJson(output) {
+  const trimmed = String(output).trim();
+  if (!trimmed) {
+    return [];
+  }
+  const entries = JSON.parse(trimmed);
+  if (!Array.isArray(entries)) {
+    throw new TypeError("luca check JSON must be an array");
+  }
+  return entries.map((entry) => ({
+    kind: "error",
+    line: Number(entry.line) || 1,
+    column: Number(entry.column) || 1,
+    message: String(entry.message === undefined ? "" : entry.message),
+  }));
+}
+
+/**
  * Build the shell command that runs a file, quoting for paths with spaces.
  */
 function buildRunCommand(cliPath, filePath) {
   return `"${cliPath}" "${filePath}"`;
+}
+
+/**
+ * Build the argv for validating a file. Kept separate so tests can pin the
+ * exact `check --format json` contract without spawning the CLI.
+ */
+function buildCheckArgs(filePath) {
+  return ["check", filePath, "--format", "json"];
 }
 
 /**
@@ -104,29 +138,45 @@ function activate(context) {
     });
   }
 
-  async function runFile() {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor || editor.document.languageId !== "luca") {
-      vscode.window.showErrorMessage("Luca: open a .lucc file first, then run it.");
-      return;
-    }
-    const document = editor.document;
-    if (document.isDirty) {
-      await document.save();
-    }
+  async function ensureCli() {
     const config = vscode.workspace.getConfiguration("luca");
     const cliPath = resolveCli(config.get("cliPath"));
+    if (cliPath) {
+      return cliPath;
+    }
+    const choice = await vscode.window.showErrorMessage(
+      "Luca: the 'luca' CLI was not found. Install it, or point the 'luca.cliPath' setting at it.",
+      "Open install guide",
+      "Set CLI path"
+    );
+    if (choice === "Open install guide") {
+      vscode.env.openExternal(vscode.Uri.parse(INSTALL_GUIDE_URL));
+    } else if (choice === "Set CLI path") {
+      vscode.commands.executeCommand("workbench.action.openSettings", "luca.cliPath");
+    }
+    return null;
+  }
+
+  async function activeLucaDocument() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor || editor.document.languageId !== "luca") {
+      vscode.window.showErrorMessage("Luca: open a .lucc file first.");
+      return null;
+    }
+    if (editor.document.isDirty) {
+      await editor.document.save();
+    }
+    return editor.document;
+  }
+
+  async function runFile() {
+    const document = await activeLucaDocument();
+    if (!document) {
+      return;
+    }
+    const config = vscode.workspace.getConfiguration("luca");
+    const cliPath = await ensureCli();
     if (!cliPath) {
-      const choice = await vscode.window.showErrorMessage(
-        "Luca: the 'luca' CLI was not found. Install it, or point the 'luca.cliPath' setting at it.",
-        "Open install guide",
-        "Set CLI path"
-      );
-      if (choice === "Open install guide") {
-        vscode.env.openExternal(vscode.Uri.parse(INSTALL_GUIDE_URL));
-      } else if (choice === "Set CLI path") {
-        vscode.commands.executeCommand("workbench.action.openSettings", "luca.cliPath");
-      }
       return;
     }
 
@@ -177,6 +227,68 @@ function activate(context) {
     });
   }
 
+  async function checkFile() {
+    const document = await activeLucaDocument();
+    if (!document) {
+      return;
+    }
+    const cliPath = await ensureCli();
+    if (!cliPath) {
+      return;
+    }
+
+    diagnostics.delete(document.uri);
+    const child = childProcess.spawn(cliPath, buildCheckArgs(document.fileName), {
+      cwd: path.dirname(document.fileName),
+    });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk;
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk;
+    });
+    child.on("error", (error) => {
+      vscode.window.showErrorMessage(`Luca: could not start '${cliPath}': ${error.message}`);
+    });
+    child.on("close", (code) => {
+      if (stderr.trim()) {
+        output.appendLine(stderr.trim());
+      }
+      if (code === 2) {
+        output.show(true);
+        vscode.window.showErrorMessage(
+          `Luca: check failed to run; see Output > Luca Code for details.`
+        );
+        return;
+      }
+      let parsed;
+      try {
+        parsed = parseCheckJson(stdout);
+      } catch (error) {
+        output.appendLine(`could not parse check output: ${error.message}`);
+        output.show(true);
+        vscode.window.showErrorMessage("Luca: check returned malformed output; see Output > Luca Code.");
+        return;
+      }
+      if (parsed.length > 0) {
+        diagnostics.set(document.uri, toVscodeDiagnostics(document.uri, parsed));
+        const first = parsed[0];
+        vscode.window.showErrorMessage(
+          `Luca: error at ${first.line}:${first.column}: ${first.message}`
+        );
+      } else if (code !== 0) {
+        output.show(true);
+        vscode.window.showErrorMessage(`Luca: check exited with code ${code}; see Output > Luca Code.`);
+      } else {
+        vscode.window.showInformationMessage(
+          `Luca: no problems found in ${path.basename(document.fileName)} (syntax and imports).`
+        );
+      }
+    });
+  }
+
   async function createFile() {
     const document = await vscode.workspace.openTextDocument({ language: "luca", content: STARTER_PROGRAM });
     await vscode.window.showTextDocument(document);
@@ -184,6 +296,7 @@ function activate(context) {
 
   context.subscriptions.push(
     vscode.commands.registerCommand("luca.runFile", runFile),
+    vscode.commands.registerCommand("luca.checkFile", checkFile),
     vscode.commands.registerCommand("luca.createFile", createFile)
   );
 }
@@ -191,7 +304,15 @@ function activate(context) {
 function deactivate() {}
 
 if (typeof module !== "undefined") {
-  module.exports = { parseDiagnostics, findOnPath, resolveCli, buildRunCommand, INSTALL_GUIDE_URL };
+  module.exports = {
+    parseDiagnostics,
+    parseCheckJson,
+    findOnPath,
+    resolveCli,
+    buildRunCommand,
+    buildCheckArgs,
+    INSTALL_GUIDE_URL,
+  };
 }
 module.exports.activate = activate;
 module.exports.deactivate = deactivate;

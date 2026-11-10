@@ -7,7 +7,14 @@ const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 
-const { parseDiagnostics, findOnPath, resolveCli, buildRunCommand } = require("../extension.js");
+const {
+  parseDiagnostics,
+  parseCheckJson,
+  findOnPath,
+  resolveCli,
+  buildRunCommand,
+  buildCheckArgs,
+} = require("../extension.js");
 
 test("parses error and warning locations", () => {
   const output = [
@@ -61,4 +68,35 @@ test("buildRunCommand quotes paths with spaces", () => {
     buildRunCommand("/Users/luca/.cargo/bin/luca", "/tmp/my dir/hello.lucc"),
     '"/Users/luca/.cargo/bin/luca" "/tmp/my dir/hello.lucc"'
   );
+});
+
+test("buildCheckArgs uses the JSON check contract", () => {
+  assert.deepEqual(buildCheckArgs("/tmp/my dir/hello.lucc"), [
+    "check",
+    "/tmp/my dir/hello.lucc",
+    "--format",
+    "json",
+  ]);
+});
+
+test("parses check JSON diagnostics", () => {
+  const output = JSON.stringify([
+    { message: "Expected ':' after 'then'", line: 1, column: 29 },
+    { message: "missing module 'Nope'", line: 3, column: 1 },
+  ]);
+  assert.deepEqual(parseCheckJson(output), [
+    { kind: "error", line: 1, column: 29, message: "Expected ':' after 'then'" },
+    { kind: "error", line: 3, column: 1, message: "missing module 'Nope'" },
+  ]);
+});
+
+test("check JSON treats silence and [] as valid", () => {
+  assert.deepEqual(parseCheckJson(""), []);
+  assert.deepEqual(parseCheckJson("  \n"), []);
+  assert.deepEqual(parseCheckJson("[]"), []);
+});
+
+test("malformed check JSON throws instead of hiding problems", () => {
+  assert.throws(() => parseCheckJson("not json"), SyntaxError);
+  assert.throws(() => parseCheckJson('{"message":"x"}'), TypeError);
 });

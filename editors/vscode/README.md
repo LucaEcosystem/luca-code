@@ -1,6 +1,6 @@
 # Luca Code for VS Code
 
-Official language support for [Luca Code](https://github.com/LucaEcosystem/luca-code) — `.lucc` syntax highlighting, snippets, one-key run, and clickable diagnostics. This page mirrors the same documentation as the repository, so what you read on the Marketplace matches GitHub.
+Official language support for [Luca Code](https://github.com/LucaEcosystem/luca-code) — `.lucc` syntax highlighting, snippets, one-key run, syntax/import validation, and clickable diagnostics. This page mirrors the same documentation as the repository, so what you read on the Marketplace matches GitHub.
 
 ## Requirements
 
@@ -22,8 +22,9 @@ Full per-OS instructions and PATH fixes: [install guide](https://github.com/Luca
 - **Run** — **Luca: Run Luca File** (`⇧⌘P` → "Luca", or the ▷ button in the editor's title bar) saves and runs the active file.
   - Default: integrated terminal (a shared "Luca" terminal) so output lands where you look and `ask` can read typed input.
   - Optional: Output > Luca Code channel (set `luca.runInTerminal` to `off`) — here `Error at line:column:` and `Warning at line:column:` lines turn into clickable squiggles in your editor.
+- **Check** — **Luca: Check Luca File** saves the file and runs `luca check --format json`, marking syntax and import-graph errors inline without executing the program. It does not evaluate expressions or touch the filesystem, so dynamic errors still appear only when you run.
 - **New Luca File** — **Luca: New Luca File** opens a starter program.
-- **Diagnostics** — error and warning lines from the run output map to inline editors markers, with the first error popping up at its location.
+- **Diagnostics** — error and warning lines from run or check map to inline editor markers, with the first error popping up at its location.
 
 ## Settings
 
@@ -33,6 +34,17 @@ Full per-OS instructions and PATH fixes: [install guide](https://github.com/Luca
 | `luca.runInTerminal` | `on` | Integrated terminal run; `off` runs in the Output channel with clickable diagnostics |
 
 If the extension reports *"the 'luca' CLI was not found"*: put `luca` on your `PATH` (restart VS Code afterwards) or set `luca.cliPath` to the binary's absolute path. [Troubleshooting guide](https://github.com/LucaEcosystem/luca-code/blob/main/docs/learn/troubleshooting.md).
+
+## Limitations
+
+- **Check is syntax + imports only.** `luca check` validates parseable source and the transitive import graph. Type mismatches, arity on runtime values, division by zero on computed values, and `ask` conversion errors surface only when you run.
+- **The CLI must be installed.** This extension is an editor front end for the `luca` binary; it does not bundle an interpreter.
+- **Source nesting is capped at 32 levels and recursion at 64 frames.** Deeper code reports a normal diagnostic (see [known limitations](https://github.com/LucaEcosystem/luca-code/blob/main/docs/learn/known-limitations.md)).
+- **No language server.** Highlighting is TextMate-based; run/check diagnostics come from the CLI, not from live incremental analysis.
+
+## License
+
+The extension and the Luca Code repository are free to **use**, including commercially; modifying or redistributing the Software itself requires prior written permission. Programs you write are yours. Full terms: [LICENSE](LICENSE).
 
 ## Learning Luca Code
 
