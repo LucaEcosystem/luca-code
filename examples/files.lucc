@@ -1,0 +1,13 @@
+-- File: write, append, read, check, and clean up one temporary file.
+-- Run from the repository root: `luca examples/files.lucc`.
+import File
+
+def const path (str) = "luca-example.tmp"
+
+File.write(path, "first")
+File.append(path, " and second")
+print(File.exists(path))
+print(File.read(path))
+
+File.delete(path)
+print(File.exists(path))

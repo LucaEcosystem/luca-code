@@ -1,0 +1,55 @@
+name: Feature request
+description: Propose a change to the language, tooling, documentation, or extension.
+title: "feature: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Luca Code 1.0 Beta is feature-complete; current work is validation and
+        defect fixing. New language syntax needs explicit maintainer approval,
+        so please frame the problem first and the syntax second.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What can you not express or do today? Include a small program if useful.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: What should happen instead? If this changes syntax, show before/after.
+      render: luca
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Workarounds with the current language, or other designs.
+    validations:
+      required: false
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Language syntax or semantics
+        - Standard library
+        - CLI or `check`
+        - Documentation or examples
+        - VS Code extension
+        - Packaging, install, or release process
+    validations:
+      required: true
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - label: I understand new language scope requires explicit approval.
+          required: true
+        - label: I checked the language reference and known limitations first.
+          required: true

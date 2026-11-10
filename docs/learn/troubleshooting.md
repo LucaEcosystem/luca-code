@@ -17,7 +17,7 @@ The installer installs Rust via rustup automatically. If that fails:
 
 ## `git clone` asks for a login / fails
 
-While the repository is private, anonymous cloning does not work. Either clone with an account that has access, or skip cloning: download/copy the source and run `bash scripts/install.sh` (or `.\scripts\install.ps1`) from inside the checkout. After the public launch this goes away.
+The repository is public, so anonymous cloning should work: `git clone --depth 1 https://github.com/LucaEcosystem/luca-code.git`. If it asks for credentials, a proxy or corporate network is usually intercepting HTTPS; configure `git` for your proxy, or download the source archive from the repository page and run `bash scripts/install.sh` (or `.\scripts\install.ps1`) inside the checkout.
 
 ## Build (`cargo install`) fails
 
@@ -37,7 +37,7 @@ The path is wrong or the file is unreadable. Check spelling, and remember paths 
 
 `luca check <file.lucc> [--format human|json]` parses the file plus its transitive `import` graph and reports `Error at line:column: ...` (human, one per line) or `[{"message":"...","line":N,"column":M}]` (JSON, `[]` when valid). It never executes application code: `print` produces no output, `ask` never prompts, `File.write/append/delete` never touch the filesystem, `System.exit` never terminates the checker.
 
-Exit codes: 0 valid, 1 validation errors, 2 usage or internal failure. Internal failures print `luca check: ...` to stderr (e.g. entry file unreadable) and never appear as JSON diagnostics. Dynamic errors (call arity on runtime values, division by zero on computed values, `ask` conversion of real input) only appear when you `luca run`.
+Exit codes: 0 valid, 1 validation errors, 2 usage or internal failure. Internal failures print `luca check: ...` to stderr (e.g. entry file unreadable) and never appear as JSON diagnostics. Dynamic errors (call arity on runtime values, division by zero on computed values, `ask` conversion of real input) only appear when you run the program with `luca <file.lucc>`.
 
 ## `Error at line:column: ...`
 
@@ -46,6 +46,8 @@ This is a Luca program error, not an install problem. Read it as **what** + **wh
 - `'x' is not declared` — typo, or the binding is declared later (programs run top to bottom).
 - `print accepts exactly one argument` — use interpolation: `print("a and {b}")`.
 - `Expected ...` — a syntax slip near the reported spot (often a missing `:` or wrong indentation; blocks use `:` + indentation).
+- `Block nesting is too deep` / `Expression nesting is too deep` — the source nests more than 32 levels; flatten the code (the limit is far above ordinary programs).
+- `Recursion limit exceeded` — a function called itself more than 64 levels deep; add a base case or reduce the depth.
 
 See [first-program.md](first-program.md#when-something-goes-wrong) and [the language reference](../reference/language-reference.md).
 

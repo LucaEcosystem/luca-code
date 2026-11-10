@@ -53,7 +53,7 @@ Here!
 none
 ```
 
-An explicit return type, `(str)` in the first example, checks every `return x` against it, and the function *must* end with a `return` (reaching the end would otherwise be a mismatch). A bare `return` without a value is an error in a typed function.
+An explicit return type, `(str)` in the first example, checks every `return x` against it. In this Beta, `none` satisfies any declared return type: a bare `return`, `return none`, or simply reaching the end of a typed function all yield `none` rather than an error, so a caller that expects a real value should check for it.
 
 ## Recursion
 

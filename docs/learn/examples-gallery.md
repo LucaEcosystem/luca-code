@@ -20,6 +20,10 @@ luca examples/hello.lucc
 | `examples/errors.lucc` | `try`/`capture`/`finally`, custom errors, `raise` |
 | `examples/ask.lucc` | Typed input with `ask` |
 | `examples/stdlib.lucc` | `Math`, `Text`, `File`, `System` |
+| `examples/text.lucc` | Every `Text` helper, including empty-separator edge cases |
+| `examples/math.lucc` | Every `Math` helper and exact division |
+| `examples/files.lucc` | Writing, appending, reading, checking, and deleting a file |
+| `examples/utility.lucc` | Reusable helpers plus a `uni` variable holding a collection |
 | `examples/integration.lucc` | Everything combined |
 
 ## `hello.lucc`
@@ -215,6 +219,60 @@ true
 true
 true
 true
+```
+
+## `text.lucc`
+
+```text
+Luca Code
+LUCA CODE
+luca code
+Luca-Code
+["list", "tuple", "set", "dict"]
+list / tuple / set
+["", "a", "b", "c", ""]
+.a.b.c.
+```
+
+## `math.lucc`
+
+```text
+5.0
+1024.0
+7
+2.50
+3
+-3
+-3
+-2
+1.50
+4
+2.5
+0.3333333333333333333333333333
+0.25
+```
+
+## `files.lucc`
+
+Creates `luca-example.tmp`, reads it, then deletes it — running it leaves no file behind:
+
+```text
+true
+first and second
+false
+```
+
+## `utility.lucc`
+
+```text
+32.0
+212.0
+0
+42
+100
+3
+["alpha", "beta", true, 3.50]
+now a scalar
 ```
 
 ## `integration.lucc`

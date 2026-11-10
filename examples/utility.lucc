@@ -1,0 +1,26 @@
+-- Utility: small reusable helpers, then a `uni` value holding a mixed list.
+def func clamp(value (int), low (int), high (int)) (int):
+    if value is < to low then :
+        return low
+    if value is > to high then :
+        return high
+    return value
+
+def func celsius_to_fahrenheit(celsius (dec)) (dec):
+    return celsius * 9 / 5 + 32
+
+print(celsius_to_fahrenheit(0.0))
+print(celsius_to_fahrenheit(100.0))
+print(clamp(-5, 0, 100))
+print(clamp(42, 0, 100))
+print(clamp(150, 0, 100))
+
+-- `uni` can hold a whole collection; methods dispatch on the runtime value.
+def var payload (uni) = ["alpha", 2, true]
+print(payload.length)
+payload.add(3.50)
+change payload[2] = "beta"
+print(payload)
+
+payload = "now a scalar"
+print(payload)

@@ -79,6 +79,6 @@ true
 - `const` cannot be reassigned, cleared, or mutated (`Cannot change constant`).
 - Assigning a value that does not match the declared type is an error: `Error at 1:1: Expected int, found str` for `def var age (int) = "hi"`.
 - A variable of any declared type may hold `none`. Working with that `none` in arithmetic or logic is an error; print it or compare it instead.
-- `uni` accepts any value: `def var anything (uni) = 1`, then later `anything (uni) = "text"` is fine.
+- `uni` accepts any value: `def var anything (uni) = 1`, then later `anything (uni) = "text"` is fine. A `uni` binding may also hold a collection (`def var mixed (uni) = [1, "two"]`); collection methods and `change mixed[i] = ...` operate on the runtime value, and the binding can switch back to a scalar later.
 
 Next: [strings](04-strings.md).

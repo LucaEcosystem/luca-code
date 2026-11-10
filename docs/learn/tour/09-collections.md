@@ -1,6 +1,6 @@
 # 9. Collections
 
-Luca has four collection kinds. declaring one reads almost like prose — the kind, then the element type:
+Luca has four collection kinds. Declaring one reads almost like prose — the kind, then the element type:
 
 ```luca
 def list names (str) = ["Luca", "Alex"]

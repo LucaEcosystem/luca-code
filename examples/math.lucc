@@ -1,0 +1,18 @@
+-- Math: exact helpers alongside ordinary numeric arithmetic.
+import Math
+
+print(Math.sqrt(25))
+print(Math.pow(2, 10))
+print(Math.abs(-7))
+print(Math.abs(-2.50))
+print(Math.round(2.50))
+print(Math.round(-2.50))
+print(Math.floor(-2.10))
+print(Math.ceil(-2.10))
+print(Math.min(4, 1.50, 3))
+print(Math.max(4, 1.50, 3))
+print(10 / 4)
+print(1 / 3)
+
+-- `Math.pow` takes an integer exponent; a negative exponent divides.
+print(Math.pow(2, -2))

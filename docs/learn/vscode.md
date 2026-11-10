@@ -1,6 +1,6 @@
 # Luca Code in VS Code
 
-The official extension gives `.lucc` files syntax highlighting, snippets, and one-key run. It is published on the Marketplace by `luca-ecosystem`, and this page mirrors what you see on its Marketplace listing.
+The official extension gives `.lucc` files syntax highlighting, snippets, one-key run, and syntax/import validation. It is published on the Marketplace by `luca-ecosystem`, and this page mirrors what you see on its Marketplace listing.
 
 ## 1. Install the extension
 
@@ -12,6 +12,7 @@ The official extension gives `.lucc` files syntax highlighting, snippets, and on
 
 - **Luca: New Luca File** (`⇧⌘P` → type "Luca") opens a starter program.
 - **Luca: Run Luca File** (same menu, or the run button in the editor title bar when a `.lucc` file is open) saves and runs the file. By default it runs in the integrated terminal (a shared "Luca" terminal), so output appears where you already look — and programs using `ask` can read your typing. Set **`luca.runInTerminal`** to off to run in the **Output** panel on the **Luca Code** channel instead, which turns `Error at line:column:` and `Warning at line:column:` output into clickable squiggles in the editor.
+- **Luca: Check Luca File** (same menu, or the check button in the editor title bar) saves the file and runs `luca check --format json`. Syntax errors and missing or circular imports appear as squiggles **without executing the program**. It never evaluates expressions or touches the filesystem, so type mismatches on computed values, bad runtime arity, division by zero, and `ask` conversion errors still surface only when you run.
 
 | Setting | Default | What it does |
 |---|---|---|
@@ -20,6 +21,13 @@ The official extension gives `.lucc` files syntax highlighting, snippets, and on
 
 - `Error at line:column:` and `Warning at line:column:` output becomes squiggles in the editor; the first error also pops up with its location.
 - Snippets: type `try`, `error`, `raise`, `func`, `if`, `for`, `while`, `ask`, `import`, or `print` and press Tab.
+
+### What the extension does not do
+
+- **Check is syntax + import validation only.** `luca check` does not statically type-check expressions, so errors such as assigning a `str` to an `int` variable surface only when you run.
+- **The CLI must be installed.** The extension is a front end for the `luca` binary; it does not bundle an interpreter.
+- **No language server.** Highlighting is TextMate-based, and diagnostics come from running or checking the file, not from live incremental analysis.
+- **Source nesting is capped at 32 levels and function recursion at 64 frames.** Deeper code reports a normal diagnostic rather than crashing; see [known limitations](known-limitations.md).
 
 ## 3. If the extension cannot find Luca
 

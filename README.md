@@ -42,11 +42,11 @@ luca hello.lucc
 
 - [Language reference](docs/reference/language-reference.md) — the complete, verified rule set
 - [Standard library](docs/reference/stdlib.md) — every `Math`, `Text`, `File`, `System` function
-- [CLI reference](docs/reference/cli.md) — `luca run`/`check`/`--help`, exit codes
+- [CLI reference](docs/reference/cli.md) — `luca`/`luca check`/`--help`/`--version`, exit codes
 - [Glossary](docs/reference/glossary.md) — plain-language definitions
 - [Changelog](CHANGELOG.md) — what shipped in each release
 
-**In your editor**: the official [VS Code extension](docs/learn/vscode.md) (Marketplace: search **Luca Code**) gives `.lucc` highlighting, snippets, diagnostics, and one-key run. First-run problems are collected in [troubleshooting](docs/learn/troubleshooting.md).
+**In your editor**: the official [VS Code extension](docs/learn/vscode.md) (Marketplace: search **Luca Code**) gives `.lucc` highlighting, snippets, one-key run, and syntax/import validation. First-run problems are collected in [troubleshooting](docs/learn/troubleshooting.md).
 
 ## A taste of the language
 
@@ -84,8 +84,8 @@ Full list and expected output: [examples gallery](docs/learn/examples-gallery.md
 
 ## Status
 
-Luca Code 1.0 Beta implements the complete 1.0 language: types and exact decimals, variables and constants, control flow, functions and closures, the four collection kinds, modules, error handling with custom `raise`-able errors, typed console input (`ask`), and the `Math`/`Text`/`File`/`System` library. Everything is verified by 129 automated tests across the language, CLI, and embedding layers. Validation and stabilization continue toward the stable 1.0; see the [changelog](CHANGELOG.md) for what shipped when.
+Luca Code 1.0 Beta implements the complete 1.0 language: types and exact decimals, variables and constants, control flow, functions and closures, the four collection kinds, modules, error handling with custom `raise`-able errors, typed console input (`ask`), and the `Math`/`Text`/`File`/`System` library. Everything is verified by 179 automated tests across the language, CLI, examples, and embedding layers. Validation and stabilization continue toward the stable 1.0; see the [changelog](CHANGELOG.md) for what shipped when and [known limitations](docs/learn/known-limitations.md) for what is intentionally out of scope.
 
 ## Developing this repository
 
-From a checkout: `cargo test` runs the suite, `cargo run -- examples/hello.lucc` runs an example, and `cargo clippy --all-targets --all-features -- -D warnings` is the lint gate. The VS Code extension lives in [`editors/vscode/`](editors/vscode/README.md) (`npm test` there). LICENSE: free to use, including commercially — see [LICENSE](LICENSE).
+From a checkout: `cargo test` runs the suite, `cargo run -- examples/hello.lucc` runs an example, and `cargo clippy --all-targets --all-features -- -D warnings` is the lint gate. The VS Code extension lives in [`editors/vscode/`](editors/vscode/README.md) (`npm test` there). See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow and [SECURITY.md](SECURITY.md) for reporting vulnerabilities. LICENSE: the interpreter, CLI, extension, examples, and docs are free to **use**, including commercially; modifying or redistributing the Software itself requires prior written permission — see [LICENSE](LICENSE). Programs you write in Luca Code are yours.

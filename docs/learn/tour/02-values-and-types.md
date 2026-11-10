@@ -8,7 +8,7 @@ Luca has five everyday types plus one special value:
 | `dec` | decimal numbers, kept **exact** | `2.5`, `0.10`, `-1.75` |
 | `str` | text in double quotes | `"Luca"`, `"Age 16"` |
 | `bool` | `true` or `false` | `true`, `false` |
-| `uni` | any of the above | `1`, `"any"`, `true` |
+| `uni` | any value, including a whole collection | `1`, `"any"`, `true`, `[1, "two"]` |
 | `none` | "no value" — a special value, not a type | `none` |
 
 You can print any value directly:
@@ -49,6 +49,8 @@ Two boundaries to remember:
 
 - Division or modulo **by zero** is an error: `print(1 / 0)` fails with `Error at 1:9: Division by zero`.
 - Integer results that exceed the 64-bit limit are an error too: `Error at 1:27: Integer overflow`.
+
+Decimals carry at most 28 fractional digits. A literal with more is rejected, and a division that never terminates is cut (not rounded) at that point: `print(1 / 3)` gives `0.3333333333333333333333333333`.
 
 ## `none` means "nothing here"
 

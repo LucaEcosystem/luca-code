@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/LucaEcosystem/luca-code#learn-and-use
+    about: Install, first program, guided tour, language and CLI references, troubleshooting.
+  - name: Known limitations
+    url: https://github.com/LucaEcosystem/luca-code/blob/main/docs/learn/known-limitations.md
+    about: Intentional boundaries and safety limits before filing a feature request.
+  - name: Security report
+    url: https://github.com/LucaEcosystem/luca-code/blob/main/SECURITY.md
+    about: Please report vulnerabilities privately, not as public issues.

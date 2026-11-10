@@ -1,0 +1,90 @@
+name: Bug report
+description: Report a defect in the interpreter, CLI, standard library, docs, or VS Code extension.
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please reduce the problem to the smallest program that reproduces it.
+        Do not include secrets or personal file paths. For security issues,
+        follow SECURITY.md instead of opening a public issue.
+  - type: input
+    id: version
+    attributes:
+      label: Luca Code version
+      description: Output of `luca --version`.
+      placeholder: luca 1.0.3 Beta
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: macOS 15.2 (aarch64), Windows 11, Ubuntu 24.04
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Interpreter or language behavior
+        - CLI (`luca`, `luca check`)
+        - Standard library (`Math`, `Text`, `File`, `System`)
+        - Modules
+        - Documentation
+        - VS Code extension
+        - Install scripts or packaging
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: reproducer
+    attributes:
+      label: Minimal `.lucc` program
+      description: The smallest source that shows the problem.
+      render: luca
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command and input
+      description: The exact command, plus any stdin lines if the program uses `ask`.
+      render: shell
+      placeholder: |
+        luca repro.lucc
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Paste the full output, including any `Error at line:column:` line or panic message.
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context
+      description: Anything else that narrows it down (first version where it appeared, related docs, workaround).
+    validations:
+      required: false
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues for a duplicate.
+          required: true
+        - label: I reduced this to a minimal reproducer.
+          required: true
+        - label: This is not a security vulnerability (those go through SECURITY.md).
+          required: true

@@ -19,7 +19,7 @@ Everything here is verified behavior. When this reference and any doc disagree, 
 |---|---|
 | Identifiers | Letters, digits, `_`; must not start with a digit; case-sensitive; no spaces; cannot be keywords |
 | Keywords | e.g. `def`, `var`, `const`, `func`, `return`, `if`, `then`, `else`, `for`, `while`, `times`, `repeat`, `from`, `stop`, `skip`, `change`, `forget`, `import`, `try`, `to`, `capture`, `error`, `finally`, `error`, `raise`, `ask`, `is`, `and`, `or`, `not`, `none`, `true`, `false`, collection words (`list`, `tuple`, `set`, `dict`), `print` |
-| Comments | `--` to end of line; `[[ ... ]]` for a multiline block (`[[` always opens a block, anywhere it appears) |
+| Comments | `--` to end of line; `[[ ... ]]` for a multiline block (`[[` always opens a block, anywhere it appears). Comment-only lines never change indentation, so they may be indented to any depth inside a block |
 | Strings | Double quotes, single line only (`String literal cannot contain a raw newline`). Escapes: `\n` `\r` `\t` `\"` `\\`; any other escaped char is taken literally |
 | Interpolation | `{name}` inside any string value substitutes the *declared variable* `name`, rendering it for display. Braces must wrap exactly one variable name: `{}`, expressions, or unknown names are errors (`Interpolation supports variable names only in this milestone`, `'ghost' is not declared`) |
 
@@ -28,15 +28,15 @@ Everything here is verified behavior. When this reference and any doc disagree, 
 | Type | Domain | Notes |
 |---|---|---|
 | `int` | 64-bit signed integers | Overflow is an error, never a wrap |
-| `dec` | Exact base-10 decimals | Arbitrary meaningful scale with retained display precision; no binary floating-point fuzz |
+| `dec` | Exact base-10 decimals | Retained display scale, capped at 28 fractional digits; no binary floating-point fuzz |
 | `str` | Unicode text | Double-quoted; compare by exact bytes |
 | `bool` | `true` / `false` | |
-| `uni` | Any real value | Universal type for heterogeneous slots |
+| `uni` | Any value, including a whole collection | Universal type for heterogeneous slots and scalar/collection switching |
 | `none` | The absence value | Occupies any declared type; prints as `none` |
 
 `none` is usable for print and comparisons (`x is == to none`) but any operation that needs a real value (arithmetic, logic, conditions, strict library arguments) rejects it.
 
-**Numeric model.** `10 / 4` is `2.5`, not truncated integer division — division never truncates; whole-number division yields `dec` (`6 / 2` prints `3.0`). `int`-`dec` mixes produce `dec`; otherwise integer arithmetic stays `int`. Decimal scale is preserved exactly (`20.00 + 1.50` → `21.50`; `0.1 + 0.2` → `0.3`). Division/modulo by zero and integer overflow are errors. There is no exponentiation operator in the language — see `Math.pow`.
+**Numeric model.** `10 / 4` is `2.5`, not truncated integer division — division never truncates; whole-number division yields `dec` (`6 / 2` prints `3.0`). `int`-`dec` mixes produce `dec`; otherwise integer arithmetic stays `int`. Decimal scale is preserved exactly (`20.00 + 1.50` → `21.50`; `0.1 + 0.2` → `0.3`). Decimal values carry at most **28 fractional digits**: literals with more are rejected, and a non-terminating division is truncated (not rounded) at 28 places (`1 / 3` → `0.3333333333333333333333333333`). Division/modulo by zero and integer overflow are errors. There is no exponentiation operator in the language — see `Math.pow`.
 
 ## 4. Bindings: `def var`, `def const`
 
@@ -54,6 +54,7 @@ def var anything (uni) = 1      -- uni accepts any value
 - `forget var name (type)` (or `forget const name (type)`) removes the binding, after which the name can be declared again.
 - `name.clear()` on a mutable variable (scalar) sets it to `none` while keeping the binding and type; it errors on a `const`. On collections it empties the collection (§8).
 - A declared type accepts `none` as a value. Collections declared without an element type keep per-entry flexibility; `uni` is the permissive element type.
+- `uni` is genuinely universal: a `uni` binding may hold a list, tuple, set, or dictionary, and collection operations (`.add`, `.remove`, `.clear()`, `change x[i] = v`, `.length`) dispatch on the value's runtime kind. It may later be reassigned to a scalar and back (`uni` bindings can switch between collection and scalar values).
 
 ## 5. Expressions and operators
 
@@ -80,7 +81,7 @@ Multiple collection indexers apply left-to-right (`matrix[1][2]`), and postfix m
 
 ## 6. Control flow
 
-Blocks open with `:` and indent one level (spaces or tabs, used consistently per block; empty blocks are errors).
+Blocks open with `:` and indent one level (spaces or tabs, used consistently per block; empty blocks are errors). For safety, blocks and grouped expressions may nest at most **32 levels** deep; deeper source reports `Block nesting is too deep` or `Expression nesting is too deep` instead of exhausting the interpreter's stack. This is an implementation limit, far above ordinary code.
 
 ```luca
 if condition then :
@@ -114,7 +115,7 @@ def func describe(name (str) = "you") (str):
 - Parameters: `pname (type) = default`. Calls are positional only; keyword-style `f(a = x)` is a syntax error (that `field = value` shape belongs to `raise`).
 - Untyped parameters accept any value; typed parameters check on call. Argument count mismatches are errors (`Expected 2 arguments, found 3`; missing one → `Missing argument for 'b'`).
 - Untyped return: functions may vary their return types; bare `return` and reaching the end both yield `none`.
-- Typed return: every returned value must match the annotation; a valueless `return` under a non-`none`-able annotation is an error.
+- Typed return: returned values of the annotated type are checked. A valueless `return` (or `return none`) is accepted under any annotation and yields `none`; callers receive `none`.
 - `return` outside a function is an error.
 - Recursion is supported; nesting limit is 64 (`Recursion limit exceeded` beyond that). Recursion depth errors are capturable by `try to` like other runtime errors.
 - Closures may read and mutate captured `var` bindings; top-level bindings act as globals. Default values evaluate at call time, in the caller's scope.
@@ -130,7 +131,7 @@ def func describe(name (str) = "you") (str):
 | `set` | `{"alpha", "stable"}` | Yes | Unique members; adding an existing member warns and no-ops |
 | `dict` | `{"Name" = "Luca", "Age" = 16}` | Yes | String keys; each entry carries its own value type |
 
-An element annotation is optional; `uni` is the element type to use when entries differ.
+An element annotation is optional; `uni` is the element type to use when entries differ. A `uni`-typed variable can itself hold an entire collection, and the collection methods below then operate on the runtime value.
 
 ### Indexing
 
@@ -152,7 +153,7 @@ An element annotation is optional; `uni` is the element type to use when entries
 
 Ranges and other index arithmetic do not exist; `.length` covers sizes:
 
-- `.length` on a collection → item/entry count; on a string → character count; on `int`/`dec` → digit count excluding sign and decimal point (invalid for `bool`).
+- `.length` on a collection → item/entry count; on a string → character count; on `int`/`dec` → digit count excluding sign and decimal point (invalid for `bool`). The `int` count is safe for every 64-bit value, including `-9223372036854775808` (19 digits).
 - `.length(decimals)` on a `dec` → its decimal-place count; `.length(items)` on a collection → item count (a spelled-out synonym).
 
 ### Display and equality
@@ -257,7 +258,7 @@ No retries, no silent `none`: failure is an ordinary (capturable) runtime error,
 Module functions use strict argument types and reject `none` where real values are needed. Full per-function documentation: [stdlib.md](stdlib.md). Summary:
 
 - **Math** — `sqrt(x)` dec (non-negative; negative is an error), `pow(base, exp)` dec (integer exponent; negative exponent divides, so `pow(0, -1)` is a division-by-zero error; `0^0` = `1`), `abs(x)` (type preserved), `round(x)` int (half away from zero), `floor(x)`/`ceil(x)` int (mathematical), `min(...)`/`max(...)` two or more numbers (all-`int` stays `int`, mixtures go `dec`).
-- **Text** — `upper(s)`, `lower(s)`, `trim(s)` (edge whitespace), `replace(s, old, new)` (all occurrences; empty `old` follows platform string semantics), `split(s, sep)` → `list(str)` (empty separator follows platform string semantics), `join(list(str), sep)` → `str`.
+- **Text** — `upper(s)`, `lower(s)`, `trim(s)` (edge whitespace), `replace(s, old, new)` (all occurrences; an empty `old` inserts `new` at every character boundary, so `replace("abc", "", "-")` → `-a-b-c-`), `split(s, sep)` → `list(str)` (an empty separator yields empty strings at both ends and between characters, so `split("abc", "")` → `["", "a", "b", "c", ""]`), `join(list(str), sep)` → `str`.
 - **File** — `read(path)` → str content (missing/unreadable → error), `write(path, content)` (overwrites), `append(path, content)` (create-or-append), `exists(path)` → bool (files *or* directories), `delete(path)` (existing file removed; missing → warning, no change; directories → error). Relative paths resolve against the process working directory. Write/append/delete return `none`.
 - **System** — `os` and `arch` are property reads (strings; calling them as `System.os()` is an error), `args()` → `list(str)` full argv (`luca`, program, then extra words), `env()` → dict of environment variables sorted by name, `exit(int)` → terminates (i32 range check) as described in §10.
 

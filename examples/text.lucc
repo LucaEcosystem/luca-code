@@ -1,0 +1,14 @@
+-- Text: the four string helpers in action.
+import Text
+
+def const messy (str) = "  Luca Code  "
+def const clean (str) = Text.trim(messy)
+
+print(clean)
+print(Text.upper(clean))
+print(Text.lower(clean))
+print(Text.replace(clean, " ", "-"))
+print(Text.split("list,tuple,set,dict", ","))
+print(Text.join(["list", "tuple", "set"], " / "))
+print(Text.split("abc", ""))
+print(Text.replace("abc", "", "."))

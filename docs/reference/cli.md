@@ -56,7 +56,9 @@ luca check program.lucc [--format human|json]
 - `File.write`/`append`/`delete` never touch the filesystem;
 - `System.exit` never terminates, and module top-level code never runs.
 
-That restraint has a flip side: dynamic errors — bad argument types on runtime values, division by zero on computed values, invalid `ask` conversions of real input, declared types that only match at runtime — can only appear when you actually `run`. `check` covers syntax and the import graph only.
+That restraint has a flip side: dynamic errors — bad argument types on runtime values, division by zero on computed values, invalid `ask` conversions of real input, declared types that only match at runtime — can only appear when you run the program with `luca <file.lucc>`. `check` covers syntax and the import graph only.
+
+The import walk is bounded so a pathological graph cannot stall validation: at most **100 modules** (`Too many modules`) and **32 import levels** (`Import depth exceeded`). Source nesting is likewise bounded at 32 levels by the parser (`Block/Expression nesting is too deep`), and a clean file is silent.
 
 Formats:
 

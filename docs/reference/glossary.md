@@ -7,12 +7,12 @@ Plain-language definitions of the terms used across the Luca Code documentation.
 | **Luca Code** | The general-purpose programming language documented here. Source files end in `.lucc`. (A sibling language, Luca UI, uses `.lucu` and is planned separately.) |
 | **Beta / 1.0 Beta** | The language's *product identity* for this generation: the complete feature set, undergoing validation and stabilization. See [CHANGELOG](../../CHANGELOG.md). |
 | **Package version** | The machine-facing version (currently **1.0.3**): `luca --version` prints `luca 1.0.3 Beta`. Marketing text says "1.0 Beta". |
-| **Interpreter** | The reference implementation: reads your program, checks it, and executes it directly. Written in Rust; a later generation may add a native compiler behind the same behavior. |
+| **Interpreter** | The reference implementation: reads your program, checks it, and executes it directly. Written in Rust. The 1.0 line is interpreter-only; no native compiler is planned for it. |
 | **`.lucc`** | A Luca Code source file. The CLI refuses any other extension. |
 | **`int` / `dec`** | Whole numbers / exact base-10 decimals. `dec` keeps the digits you wrote — `0.1 + 0.2` is exactly `0.3`, and `10 / 4` is `2.5`. |
 | **`str`** | Text in double quotes, single line, with `\n`-style escapes. |
 | **`bool`** | `true` or `false` — the only valid types for conditions; there is no truthiness. |
-| **`uni`** | The universal type: accepts any value (`int`, `str`, bool…). Useful for heterogeneous slots. |
+| **`uni`** | The universal type: accepts any value (`int`, `str`, bool, or an entire collection). Useful for heterogeneous slots and for variables that switch between scalar and collection values. |
 | **`none`** | The absence value. Prints as `none`, occupies any declared type, and rejects value-requiring operations. |
 | **Binding** | A name attached to a value in a scope: `def var` (changeable) or `def const` (frozen). |
 | **Inference** | Omitting the `(type)` when the assigned value makes it obvious: `def var mood = "calm"` is a `str`. |
@@ -21,7 +21,7 @@ Plain-language definitions of the terms used across the Luca Code documentation.
 | **`clear()`** | Sets a mutable variable to `none`, keeping its name and type; empties a collection to its zero form (`[]`, `()`, `{}`). |
 | **Interpolation** | `{name}` inside a string substitutes a declared variable's rendered value, wherever strings are built. |
 | **Escape** | A backslash sequence in a string: `\n` newline, `\r`, `\t`, `\"`, `\\`. |
-| **Comment** | `--` to end of line; `[[ … ]]` for multiline. `[[` always opens a block, so `[ [1]]` needs the space for nested lists. |
+| **Comment** | `--` to end of line; `[[ … ]]` for multiline. Comment-only lines do not affect indentation, so they may sit at any depth. `[[` always opens a block, so `[ [1]]` needs the space for nested lists. |
 | **Block** | The statements indented under a `:` — used by `if`/`else`, loops, `def func`, `try`/`capture`/`finally`, and `def error`. |
 | **Worded comparisons** | Luca's comparison forms: `is == to`, `is != to`, `is > to`, `is >= to`, `is < to`, `is <= to`. |
 | **Truthiness** | Auto-converting conditions to booleans. Luca has none: conditions must be real `bool`s. |
@@ -42,7 +42,7 @@ Plain-language definitions of the terms used across the Luca Code documentation.
 | **`ask`** | Reads one input line for the receiving binding, converting per that binding's declared type; invalid typed input is an error (no retry). |
 | **Diagnostics** | The formatted error/warning lines: `Error at line:column: message` / `Warning at line:column: message`. |
 | **`luca check`** | CLI subcommand validating a program and its whole import graph without executing it; reports the same kinds of diagnostics ([details](cli.md)). |
-| **Exit code** | What the process reports to the OS: `0` success; `1` with a runtime error; `2` usage/internal CLI failure — or the code your program passed to `System.exit(code)`. |
+| **Exit code** | What the process reports to the OS: `0` success; `1` when a run fails or `luca check` finds validation errors; `2` usage/internal CLI failure — or the code your program passed to `System.exit(code)`. |
 | **`System.exit`** | The standard way to terminate with a code. Uncapturable by `capture error`, though `finally` still runs. |
 
 Missing a term you expected? The [language reference](language-reference.md) has the complete rule set, and [contacting the project](https://github.com/LucaEcosystem/luca-code) is welcome for what remains unclear.

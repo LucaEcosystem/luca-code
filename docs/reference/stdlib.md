@@ -48,8 +48,8 @@ print(Math.max(1, 2.5))
 | `Text.upper(s)` | `s` str | `str` | Uppercased copy. |
 | `Text.lower(s)` | `s` str | `str` | Lowercased copy. |
 | `Text.trim(s)` | `s` str | `str` | Copy with edge whitespace removed. |
-| `Text.replace(s, old, new)` | all str | `str` | All occurrences of `old` replaced with `new`. An empty `old` follows the host platform's string semantics. |
-| `Text.split(s, sep)` | both str | `list(str)` | Split on every occurrence of `sep`. An empty `sep` follows the host platform's string semantics. |
+| `Text.replace(s, old, new)` | all str | `str` | All occurrences of `old` replaced with `new`. An empty `old` inserts `new` at every character boundary (`Text.replace("abc", "", "-")` → `-a-b-c-`). |
+| `Text.split(s, sep)` | both str | `list(str)` | Split on every occurrence of `sep`. An empty `sep` yields empty strings at both ends and between characters (`Text.split("abc", "")` → `["", "a", "b", "c", ""]`). |
 | `Text.join(list, sep)` | `list` list(str), `sep` str | `str` | Elements joined with `sep` between them. |
 
 Verified console session (`Text.split` output shows collection quoting):
@@ -84,6 +84,8 @@ x+y
 | `File.delete(path)` | `path` str | `none` | Deletes an existing file; deleting a **missing** path warns (`File '…' does not exist`) with no change; deleting a directory → error. |
 
 Paths are strings; relative paths resolve against the process working directory, and absolute paths are allowed. All failures except missing-path deletion are errors, so they pair naturally with `try to` in the [tour chapter](../learn/tour/11-errors.md).
+
+`File.*` grants a program the filesystem permissions of the user running `luca`: there is no sandbox, path allowlist, or size cap. Only run scripts you trust, and review `File.write`/`append`/`delete` calls before running code from elsewhere. `luca check` never touches the filesystem, so it is safe for inspection.
 
 ## System — the host world
 

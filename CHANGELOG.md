@@ -4,6 +4,53 @@ All notable user-visible changes to Luca Code. The product identity **Luca Code 
 
 Starting with the 1.0.3 package, package versions follow this scheme: within the 1.0 generation, documentation/publishing/defect releases bump the package version while the language stays at its Beta content.
 
+## Unreleased — audit and stabilization
+
+No version bump yet. This section records the 1.0.3 audit work; the package
+stays at **1.0.3 Beta** until a release is explicitly cut.
+
+### Correctness fixes
+
+- **Comment-only lines no longer affect indentation.** `--` and `[[ … ]]`
+  comments may now be indented to any depth inside a block without producing
+  spurious `Indent`/`Dedent` errors. A block containing only comments is still
+  reported as empty.
+- **`int.length` is safe for every 64-bit value**, including
+  `-9223372036854775808` (19 digits); it previously panicked on `i64::MIN`.
+- **Module constant collections are isolated from aliases.** Reading a
+  collection-valued `def const` from a module now returns a deep copy, matching
+  the const semantics of ordinary bindings.
+- **`uni` is genuinely universal again.** A `uni` binding may hold a list,
+  tuple, set, or dictionary; `.add`, `.remove`, `.clear()`, `change x[i] = v`,
+  and `.length` dispatch on the runtime value, and the binding may later switch
+  back to a scalar.
+- **Decimal extremes no longer panic.** Display, division, and remainder handle
+  `i128::MIN`/`i128::MAX` using checked/unsigned arithmetic. Non-terminating
+  division is documented and tested as truncated at 28 fractional digits.
+- **Pathological nesting reports a diagnostic.** Groups and blocks nest at most
+  32 levels (`Block/Expression nesting is too deep`) instead of overflowing the
+  parser stack on thousands of nested parentheses.
+
+### Tests and tooling
+
+- Regression suites for the fixes above, plus lexer, parser, decimal, module,
+  documentation-link, metadata, and end-to-end example tests. The suite now
+  runs **179 tests** across **17 test targets**.
+- New examples: `text.lucc`, `math.lucc`, `files.lucc`, `utility.lucc`, with
+  `examples/README.md` and expected output in the gallery.
+- VS Code extension: new **Luca: Check Luca File** command (`luca check
+  --format json` diagnostics without executing), unit tests for the JSON
+  contract, `bugs`/`homepage` metadata, a packaged `CHANGELOG.md`, and a copy of
+  the repository license.
+- Documentation: the language reference now documents comment indentation, the
+  28-digit decimal cap, `uni` collections, typed-return behavior, and nesting
+  limits; `docs/learn/known-limitations.md` records intentional boundaries;
+  troubleshooting no longer describes the repository as private or mentions a
+  nonexistent `luca run` subcommand.
+- CI additionally builds documentation (`cargo doc --no-deps`) and smoke-runs
+  the new deterministic examples.
+
+
 ## 1.0.3 Beta (2026-11-05) — documentation and publishing
 
 - New documentation set: a [guided tour](docs/learn/tour/index.md) from "Hello" to custom errors, a complete [language reference](docs/reference/language-reference.md), [standard-library reference](docs/reference/stdlib.md), [CLI reference](docs/reference/cli.md), and a [glossary](docs/reference/glossary.md).
