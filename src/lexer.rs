@@ -30,7 +30,13 @@ pub fn lex(source: &str) -> Result<Vec<Token>, LucaError> {
                 indent += 1;
                 temp_index += 1;
             }
-            let is_empty = temp_index >= chars.len() || chars[temp_index] == '\n' || chars[temp_index] == '\r';
+            // Comment-only lines (both `--` and `[[ ... ]]`) never affect the
+            // indentation stack, so a comment may be indented to any depth
+            // inside a block without producing spurious Indent/Dedent tokens.
+            let is_comment = temp_index + 1 < chars.len()
+                && ((chars[temp_index] == '-' && chars[temp_index + 1] == '-')
+                    || (chars[temp_index] == '[' && chars[temp_index + 1] == '['));
+            let is_empty = temp_index >= chars.len() || chars[temp_index] == '\n' || chars[temp_index] == '\r' || is_comment;
             if !is_empty {
                 let current_indent = *indent_stack.last().unwrap();
                 if indent > current_indent {

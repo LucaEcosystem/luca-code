@@ -193,6 +193,22 @@ impl Interpreter {
         Ok(())
     }
 
+    /// Resolve the collection kind used by collection statements/operations.
+    ///
+    /// Ordinarily the binding metadata records the kind. A `uni` binding may
+    /// also hold a collection, so dispatch on the runtime value in that case.
+    fn collection_binding_target(&self, name: &str, line: usize, column: usize) -> Result<(CollectionKind, Option<Type>), LucaError> {
+        let binding = self.find_binding(name).ok_or_else(|| LucaError::new(format!("'{name}' is not declared"), line, column))?;
+        match &binding.binding_type {
+            BindingType::Collection(kind, elem) => Ok((*kind, *elem)),
+            BindingType::Scalar(Type::Uni) => match binding.value.collection_kind() {
+                Some(kind) => Ok((kind, None)),
+                None => Err(LucaError::new(format!("'{name}' is not a collection"), line, column)),
+            },
+            BindingType::Scalar(_) => Err(LucaError::new(format!("'{name}' is not a collection"), line, column)),
+        }
+    }
+
     fn check_element_matches(&self, value: &Value, expected: Option<Type>, line: usize, column: usize) -> Result<(), LucaError> {
         match expected {
             None => Ok(()),
@@ -536,11 +552,22 @@ impl Interpreter {
         let value = self.apply_ask_conversion(value, evaluated, *declared_type)?;
         if value.is_collection() {
             if let Some(t) = declared_type {
-                return Err(LucaError::new(
-                    format!("Expected {t}, found {}", type_name_for_value(&value)),
-                    line,
-                    column,
-                ));
+                if *t != Type::Uni {
+                    return Err(LucaError::new(
+                        format!("Expected {t}, found {}", type_name_for_value(&value)),
+                        line,
+                        column,
+                    ));
+                }
+                // `uni` is the universal type: a `uni` binding may hold a
+                // collection and later be reassigned to any other value, so
+                // it keeps scalar binding metadata and collection operations
+                // dispatch on the value's runtime kind.
+                self.current_scope_mut().insert(
+                    name.to_owned(),
+                    Binding { value, binding_type: BindingType::Scalar(Type::Uni), mutable },
+                );
+                return Ok(());
             }
                         let kind = value.collection_kind().unwrap();
                         let elem = match &value {
@@ -1175,7 +1202,14 @@ impl Interpreter {
             .get(module_name)
             .ok_or_else(|| LucaError::new(format!("Module '{module_name}' is not imported"), line, column))?;
         if let Some(binding) = module.globals.get(member) {
-            Ok(binding.value.clone())
+            // A module constant is exposed like any other `const` read: return
+            // a deep copy so callers cannot mutate the module's storage through
+            // an alias. Mutable module bindings keep reference semantics.
+            if binding.value.is_collection() && !binding.mutable {
+                Ok(binding.value.deep_copy_collection())
+            } else {
+                Ok(binding.value.clone())
+            }
         } else if module.funcs.contains_key(member) {
             Err(LucaError::new(
                 format!("'{member}' is a function; use '{module_name}.{member}(...)' to call it"),
@@ -1560,18 +1594,13 @@ impl Interpreter {
 
     fn execute_change_index(&mut self, name: &str, index_expr: &Expr, value_expr: &Expr, line: usize, column: usize) -> Result<(), LucaError> {
         self.check_not_iterating(name, line, column)?;
-        let (kind, elem) = {
+        {
             let b = self.find_binding(name).ok_or_else(|| LucaError::new(format!("'{name}' is not declared"), line, column))?;
             if !b.mutable {
                 return Err(LucaError::new(format!("Cannot change constant '{name}'"), line, column));
             }
-            match &b.binding_type {
-                BindingType::Scalar(_) => {
-                    return Err(LucaError::new(format!("'{name}' is not a collection"), line, column));
-                }
-                BindingType::Collection(k, e) => (*k, *e),
-            }
-        };
+        }
+        let (kind, elem) = self.collection_binding_target(name, line, column)?;
         let index_val = self.evaluate(index_expr)?;
         let new_val = self.evaluate(value_expr)?;
         match kind {
@@ -1704,18 +1733,13 @@ impl Interpreter {
 
     fn execute_collection_add(&mut self, name: &str, args: &[Expr], line: usize, column: usize) -> Result<(), LucaError> {
         self.check_not_iterating(name, line, column)?;
-        let (kind, elem) = {
+        {
             let b = self.find_binding(name).ok_or_else(|| LucaError::new(format!("'{name}' is not declared"), line, column))?;
             if !b.mutable {
                 return Err(LucaError::new(format!("Cannot change constant '{name}'"), line, column));
             }
-            match &b.binding_type {
-                BindingType::Scalar(_) => {
-                    return Err(LucaError::new(format!("'{name}' is not a collection"), line, column));
-                }
-                BindingType::Collection(k, e) => (*k, *e),
-            }
-        };
+        }
+        let (kind, elem) = self.collection_binding_target(name, line, column)?;
         match kind {
             CollectionKind::List | CollectionKind::Tuple | CollectionKind::Set => {
                 if args.len() != 1 {
@@ -1786,15 +1810,7 @@ impl Interpreter {
 
     fn execute_collection_remove(&mut self, name: &str, arg: &Expr, line: usize, column: usize) -> Result<(), LucaError> {
         self.check_not_iterating(name, line, column)?;
-        let kind = {
-            let b = self.find_binding(name).ok_or_else(|| LucaError::new(format!("'{name}' is not declared"), line, column))?;
-            match &b.binding_type {
-                BindingType::Scalar(_) => {
-                    return Err(LucaError::new(format!("'{name}' is not a collection"), line, column));
-                }
-                BindingType::Collection(k, _) => *k,
-            }
-        };
+        let kind = self.collection_binding_target(name, line, column)?.0;
         // Check mutable
         {
             let b = self.find_binding(name).unwrap();
@@ -2222,11 +2238,8 @@ impl Interpreter {
                 Value::Dict(entries) => Ok(Value::Int(entries.borrow().len() as i64)),
                 Value::Str(s) => Ok(Value::Int(s.chars().count() as i64)),
                 Value::Int(n) => {
-                    let digits = if n == 0 {
-                        1
-                    } else {
-                        n.abs().to_string().len() as i64
-                    };
+                    // `unsigned_abs` avoids overflow for i64::MIN.
+                    let digits = n.unsigned_abs().to_string().len() as i64;
                     Ok(Value::Int(digits))
                 }
                 Value::Dec(d) => {

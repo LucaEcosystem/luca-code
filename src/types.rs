@@ -84,8 +84,9 @@ impl Dec {
             return format!("{}.0", self.unscaled);
         }
         let sign = if self.unscaled < 0 { "-" } else { "" };
-        let abs = self.unscaled.abs();
-        let pow = Self::pow10(self.scale).expect("scale pow10 valid");
+        // `unsigned_abs` avoids the i128::MIN overflow that `.abs()` panics on.
+        let abs = self.unscaled.unsigned_abs();
+        let pow = Self::pow10(self.scale).expect("scale pow10 valid") as u128;
         let int_part = abs / pow;
         let frac_part = abs % pow;
         let frac_str = format!("{:0width$}", frac_part, width = self.scale as usize);
@@ -138,60 +139,36 @@ impl Dec {
         if other.unscaled == 0 {
             return None;
         }
-        // Compute exact division with scale determination
-        // We want minimal scale that makes division exact, up to 28
-        // Handle sign
+        // Compute exact division with scale determination.
+        // We want minimal scale that makes division exact, up to 28.
+        // Work in u128 magnitudes so i128::MIN is handled without overflow.
         let negative = (self.unscaled < 0) ^ (other.unscaled < 0);
-        let a_abs = self.unscaled.abs();
-        let b_abs = other.unscaled.abs();
-        // Rational: (a_abs * 10^(other.scale)) / (b_abs * 10^(self.scale))
-        // Let numerator = a_abs * 10^(other.scale)
-        // denominator = b_abs * 10^(self.scale)
-        let pow_a = Self::pow10(self.scale)?;
-        let pow_b = Self::pow10(other.scale)?;
-        // Actually numerator = a_abs * pow_b, denominator = b_abs * pow_a
-        // To avoid double scaling, we can compute directly with scale handling in division loop
+        let a_abs = self.unscaled.unsigned_abs();
+        let b_abs = other.unscaled.unsigned_abs();
+        let pow_a = Self::pow10(self.scale)? as u128;
+        let pow_b = Self::pow10(other.scale)? as u128;
         let numerator = a_abs.checked_mul(pow_b)?;
         let denominator = b_abs.checked_mul(pow_a)?;
         // Find minimal k (0..=28) where (numerator * 10^k) % denominator == 0
-        // But also need to account for existing scales: result scale = k
-        // We search for smallest k that yields exact division
         let mut k: u32 = 0;
         let max_k = 28;
         let mut scaled_num = numerator;
-        // For k=0, check
         loop {
-            if k > max_k {
-                break;
-            }
             if scaled_num % denominator == 0 {
-                let mut unscaled = scaled_num / denominator;
-                if negative {
-                    unscaled = -unscaled;
-                }
-                // For integer exact results where k==0, we want scale at least 1 to indicate dec (since division always dec)
-                // But our display for scale 0 gives "5.0", which already indicates dec, so k==0 is okay.
-                // However to retain meaningful scale, if k==0 we could keep 0 and display will add .0
-                return Some(Self { unscaled, scale: k });
+                let unscaled = scaled_num / denominator;
+                return Some(Self { unscaled: signed_from_magnitude(unscaled, negative)?, scale: k });
             }
             if k == max_k {
                 break;
             }
-            // Scale up
             scaled_num = scaled_num.checked_mul(10)?;
             k += 1;
         }
-        // If not exact within max_k, produce truncated result with max_k scale
-        // Use max_k scale truncated division
-        // Recompute scaled_num for max_k
-        let pow_max = Self::pow10(max_k)?;
+        // If not exact within max_k, produce a truncated result with max_k scale.
+        let pow_max = Self::pow10(max_k)? as u128;
         let scaled = numerator.checked_mul(pow_max)?;
-        let mut unscaled = scaled / denominator;
-        if negative {
-            unscaled = -unscaled;
-        }
-        // Trim trailing zeros but keep at least 1? For non-terminating, we could keep max_k
-        Some(Self { unscaled, scale: max_k })
+        let unscaled = scaled / denominator;
+        Some(Self { unscaled: signed_from_magnitude(unscaled, negative)?, scale: max_k })
     }
 
     pub fn rem(&self, other: &Self) -> Option<Self> {
@@ -203,7 +180,8 @@ impl Dec {
         let pow_other = Self::pow10(scale - other.scale)?;
         let a = self.unscaled.checked_mul(pow_self)?;
         let b = other.unscaled.checked_mul(pow_other)?;
-        let unscaled = a % b;
+        // checked_rem reports overflow (i128::MIN % -1) instead of panicking.
+        let unscaled = a.checked_rem(b)?;
         Some(Self { unscaled, scale })
     }
 
@@ -218,6 +196,20 @@ impl Dec {
 
     pub fn is_zero(&self) -> bool {
         self.unscaled == 0
+    }
+}
+
+/// Convert a non-negative magnitude back to a signed `i128`, including the
+/// one magnitude (`i128::MAX + 1`) that maps to `i128::MIN`.
+fn signed_from_magnitude(magnitude: u128, negative: bool) -> Option<i128> {
+    if negative {
+        if magnitude == (i128::MAX as u128) + 1 {
+            Some(i128::MIN)
+        } else {
+            i128::try_from(magnitude).ok()?.checked_neg()
+        }
+    } else {
+        i128::try_from(magnitude).ok()
     }
 }
 

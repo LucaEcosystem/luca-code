@@ -140,3 +140,19 @@ fn builtin_modules_take_precedence_over_files() {
         run_module_source(&fake, &["/fake/lib"], "import Math\nprint(Math.abs(0 - 3))\n").unwrap();
     assert_eq!(outcome, RunOutcome::Completed(vec!["3".to_owned()]));
 }
+
+#[test]
+fn module_const_collection_reads_are_isolated_from_aliases() {
+    let fake = FakePlatform::new();
+    fake.add_file("/fake/lib/Consts.lucc", "def const items = [1, 2]\n");
+    let outcome = run_module_source(
+        &fake,
+        &["/fake/lib"],
+        "import Consts\ndef var alias = Consts.items\nalias.add(3)\nprint(Consts.items)\nprint(alias)\n",
+    )
+    .unwrap();
+    assert_eq!(
+        outcome,
+        RunOutcome::Completed(vec!["[1, 2]".to_owned(), "[1, 2, 3]".to_owned()])
+    );
+}

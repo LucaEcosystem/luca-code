@@ -5,9 +5,23 @@ use crate::{
     types::{CollectionKind, Type, Value},
 };
 
-pub fn parse(tokens: Vec<Token>) -> Result<Program, LucaError> { Parser { tokens, current: 0 }.program() }
+/// Maximum parser recursion depth for expressions and blocks.
+///
+/// The recursive-descent parser would otherwise overflow the native stack on
+/// pathological input (for example, thousands of nested parentheses). This is
+/// an implementation safety limit, not a language rule: a program nested more
+/// deeply than this reports a normal diagnostic instead of aborting.
+///
+/// The value is deliberately conservative. In unoptimized builds the parser
+/// uses roughly 3 KB of stack per expression nesting level, so 32 levels keep
+/// worst-case parses within the 2 MiB stack that Rust uses for spawned threads
+/// (including the default test harness) while remaining far above ordinary
+/// source code.
+const MAX_NESTING_DEPTH: usize = 32;
 
-struct Parser { tokens: Vec<Token>, current: usize }
+pub fn parse(tokens: Vec<Token>) -> Result<Program, LucaError> { Parser { tokens, current: 0, nesting: 0 }.program() }
+
+struct Parser { tokens: Vec<Token>, current: usize, nesting: usize }
 
 impl Parser {
     fn program(mut self) -> Result<Program, LucaError> {
@@ -401,14 +415,31 @@ impl Parser {
     }
 
     fn block(&mut self) -> Result<Block, LucaError> {
+        self.nesting += 1;
+        if self.nesting > MAX_NESTING_DEPTH {
+            self.nesting -= 1;
+            return Err(self.error("Block nesting is too deep"));
+        }
+        let result = self.block_inner();
+        self.nesting -= 1;
+        result
+    }
+
+    fn block_inner(&mut self) -> Result<Block, LucaError> {
         // Expect newline, indent, statements, dedent
         // Colon already consumed, so next should be newline
         if !self.take(&TokenKind::Newline) {
             return Err(self.error("Expected newline after ':'"));
         }
-        // Allow multiple newlines before indent (empty lines)
-        while self.take(&TokenKind::Newline) {}
-        self.consume(&TokenKind::Indent, "Expected indented block after ':'")?;
+        // Allow multiple newlines before indent (empty lines and comment-only
+        // lines, which no longer affect the indentation stack).
+        let mut extra_newlines = 0usize;
+        while self.take(&TokenKind::Newline) { extra_newlines += 1; }
+        if !self.take(&TokenKind::Indent) {
+            // A block whose only content was blank/comment lines is empty.
+            let message = if extra_newlines > 0 { "Empty block is not allowed" } else { "Expected indented block after ':'" };
+            return Err(self.error(message));
+        }
         let mut statements = Vec::new();
         while !self.check(&TokenKind::Dedent) && !self.check(&TokenKind::Eof) {
             if self.take(&TokenKind::Newline) {
@@ -428,7 +459,16 @@ impl Parser {
         Ok(Block { statements })
     }
 
-    fn expression(&mut self) -> Result<Expr, LucaError> { self.or() }
+    fn expression(&mut self) -> Result<Expr, LucaError> {
+        self.nesting += 1;
+        if self.nesting > MAX_NESTING_DEPTH {
+            self.nesting -= 1;
+            return Err(self.error("Expression nesting is too deep"));
+        }
+        let result = self.or();
+        self.nesting -= 1;
+        result
+    }
 
     fn or(&mut self) -> Result<Expr, LucaError> {
         let mut expr = self.and()?;
