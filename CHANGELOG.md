@@ -4,10 +4,15 @@ All notable user-visible changes to Luca Code. The product identity **Luca Code 
 
 Starting with the 1.0.3 package, package versions follow this scheme: within the 1.0 generation, documentation/publishing/defect releases bump the package version while the language stays at its Beta content.
 
-## Unreleased — audit and stabilization
+## Unreleased
 
-No version bump yet. This section records the 1.0.3 audit work; the package
-stays at **1.0.3 Beta** until a release is explicitly cut.
+No changes yet.
+
+## 1.0.3 Beta (2026-11-12) — documentation, publishing, and audit
+
+- New documentation set: a [guided tour](docs/learn/tour/index.md) from "Hello" to custom errors, a complete [language reference](docs/reference/language-reference.md), [standard-library reference](docs/reference/stdlib.md), [CLI reference](docs/reference/cli.md), and a [glossary](docs/reference/glossary.md).
+- Guided install-and-first-run path refreshed for public use: [install](docs/learn/install.md), [first program](docs/learn/first-program.md), [VS Code setup](docs/learn/vscode.md), [troubleshooting](docs/learn/troubleshooting.md), and a runnable [examples gallery](docs/learn/examples-gallery.md).
+- `luca --version` now prints `luca 1.0.3 Beta`; the VS Code extension is packaged as `1.0.3`.
 
 ### Correctness fixes
 
@@ -50,12 +55,6 @@ stays at **1.0.3 Beta** until a release is explicitly cut.
 - CI additionally builds documentation (`cargo doc --no-deps`) and smoke-runs
   the new deterministic examples.
 
-
-## 1.0.3 Beta (2026-11-05) — documentation and publishing
-
-- New documentation set: a [guided tour](docs/learn/tour/index.md) from "Hello" to custom errors, a complete [language reference](docs/reference/language-reference.md), [standard-library reference](docs/reference/stdlib.md), [CLI reference](docs/reference/cli.md), and a [glossary](docs/reference/glossary.md).
-- Guided install-and-first-run path refreshed for public use: [install](docs/learn/install.md), [first program](docs/learn/first-program.md), [VS Code setup](docs/learn/vscode.md), [troubleshooting](docs/learn/troubleshooting.md), and a runnable [examples gallery](docs/learn/examples-gallery.md).
-- `luca --version` now prints `luca 1.0.3 Beta`; the VS Code extension is packaged as `1.0.3`. No language behavior changes in this release.
 
 ## 1.0 Beta (verified 2026-09-26) — the feature-complete Beta
 

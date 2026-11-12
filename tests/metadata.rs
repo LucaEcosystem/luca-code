@@ -84,8 +84,12 @@ fn changelog_tracks_unreleased_and_current_release() {
         "changelog records 1.0.3 Beta"
     );
     assert!(
-        changelog.contains("No version bump yet"),
-        "audit work is explicitly unreleased"
+        changelog.contains("## 1.0.3 Beta (2026-11-12)"),
+        "changelog records the dated 1.0.3 Beta release"
+    );
+    assert!(
+        changelog.contains("No changes yet"),
+        "a fresh Unreleased section follows the release"
     );
 }
 
