@@ -8,7 +8,7 @@ pub mod platform;
 pub mod stdlib;
 pub mod types;
 
-pub const PRODUCT_VERSION: &str = "1.0.3 Beta";
+pub const PRODUCT_VERSION: &str = "1.0.4 Beta";
 
 /// Run a program and collect its output.
 ///

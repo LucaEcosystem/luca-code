@@ -2,7 +2,7 @@
 
 A guided tour of Luca Code, one small chapter at a time. Every snippet is a complete, runnable program — type it into a `.lucc` file, run `luca that-file.lucc`, and compare what you see with the shown output. Nothing here assumes prior experience with any particular language; if you have programmed before, skim the early chapters.
 
-Before starting, install the `luca` command: [install.md](../install.md). Verify with `luca --version` (prints `luca 1.0.3 Beta`).
+Before starting, install the `luca` command: [install.md](../install.md). Verify with `luca --version` (prints `luca 1.0.4 Beta`).
 
 ## How to follow along
 

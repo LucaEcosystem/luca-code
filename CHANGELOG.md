@@ -8,6 +8,17 @@ Starting with the 1.0.3 package, package versions follow this scheme: within the
 
 No changes yet.
 
+## 1.0.4 Beta (2026-11-21) — Marketplace presentation and install docs
+
+- The VS Code extension now ships a rendered 128×128 Marketplace icon, a real
+  VS Code screenshot, a preview badge, and a dark gallery banner with richer
+  categories and keywords so the listing is easier to find and recognize.
+- Marketplace and repository copy now lead with the install command and the
+  language's distinguishing features: exact decimals, readable diagnostics, one
+  key run, and check-only validation.
+- `luca --version` reports `luca 1.0.4 Beta`; the VS Code extension is packaged
+  as `1.0.4`. No language behavior changed in this release.
+
 ## 1.0.3 Beta (2026-11-12) — documentation, publishing, and audit
 
 - New documentation set: a [guided tour](docs/learn/tour/index.md) from "Hello" to custom errors, a complete [language reference](docs/reference/language-reference.md), [standard-library reference](docs/reference/stdlib.md), [CLI reference](docs/reference/cli.md), and a [glossary](docs/reference/glossary.md).

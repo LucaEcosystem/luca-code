@@ -3,7 +3,7 @@
 ## Supported versions
 
 Luca Code 1.0 Beta is the supported line. The package version is currently
-**1.0.3**; security fixes land in the next package release on that line.
+**1.0.4**; security fixes land in the next package release on that line.
 
 ## Reporting a vulnerability
 

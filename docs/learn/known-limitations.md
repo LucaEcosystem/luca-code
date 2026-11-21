@@ -82,7 +82,7 @@ pathological input produces a diagnostic instead of aborting the process.
 - CI runs the test suite on Linux, macOS, and Windows. The install scripts are
   smoke-tested there; untested shells or unusual permissions setups may still
   need the manual PATH steps in [troubleshooting](troubleshooting.md).
-- The VS Code extension and the CLI share the `1.0.3` package version while the
+- The VS Code extension and the CLI share the `1.0.4` package version while the
   product identity stays **Luca Code 1.0 Beta**. A version bump does not imply
   a language change.
 

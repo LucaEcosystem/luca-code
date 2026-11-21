@@ -1,18 +1,34 @@
 # Luca Code
 
+[![VS Code Marketplace version](https://img.shields.io/visual-studio-marketplace/v/luca-ecosystem.luca-code?label=VS%20Code)](https://marketplace.visualstudio.com/items?itemName=luca-ecosystem.luca-code)
+
 Luca Code is a small, friendly, general-purpose programming language: plain sentences for rules, exact decimal math (`10 / 4` is `2.5`), and programs that run from top to bottom with no ceremony. This repository contains the language's Rust reference implementation (lexer → parser → AST → type checking → interpreter) and its tooling.
 
-Current release: **Luca Code 1.0 Beta** — a feature-complete Beta of every planned behavior, undergoing validation toward 1.0. `luca --version` reports the package version: **`luca 1.0.3 Beta`**.
+Current release: **Luca Code 1.0 Beta** — a feature-complete Beta of every planned behavior, undergoing validation toward 1.0. `luca --version` reports the package version: **`luca 1.0.4 Beta`**.
+
+## Why Luca Code
+
+- **Exact decimals, not floating-point surprises.** `10 / 4` is `2.5`, and `0.1 + 0.2` prints `0.3`.
+- **Errors you can act on.** Diagnostics point to the exact line and column in plain language.
+- **Small and self-contained.** The reference interpreter has no external crate dependencies.
+- **Editor-ready.** The [VS Code extension](https://marketplace.visualstudio.com/items?itemName=luca-ecosystem.luca-code) adds highlighting, snippets, one-key run, and check-only validation.
 
 ## Get started in one minute
 
-Install the `luca` command ([full instructions](docs/learn/install.md)):
+Install the `luca` command ([full instructions](docs/learn/install.md)). On macOS or Linux, the fastest path is one line (it clones and builds from source, installing Rust if needed):
+
+```sh
+bash <(curl -fsSL https://raw.githubusercontent.com/LucaEcosystem/luca-code/main/scripts/install.sh)
+luca --version                     # prints: luca 1.0.4 Beta
+```
+
+Or clone first (also works on Windows with `.\scripts\install.ps1` in PowerShell):
 
 ```sh
 git clone --depth 1 https://github.com/LucaEcosystem/luca-code.git
 cd luca-code
-bash scripts/install.sh            # Windows: .\scripts\install.ps1 in PowerShell
-luca --version                     # prints: luca 1.0.3 Beta
+bash scripts/install.sh
+luca --version                     # prints: luca 1.0.4 Beta
 ```
 
 Write `hello.lucc`:

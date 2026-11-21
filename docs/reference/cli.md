@@ -28,7 +28,7 @@ Examples:
 ## `luca --version`
 
 ```text
-luca 1.0.3 Beta
+luca 1.0.4 Beta
 ```
 
 Exit code `0`.

@@ -3,6 +3,15 @@
 The extension version follows the CLI package version; the product identity is
 **Luca Code 1.0 Beta**.
 
+## 1.0.4
+
+- The listing now has a rendered Marketplace icon, a real VS Code screenshot, a
+  preview badge, a dark gallery banner, and richer categories/keywords.
+- README copy leads with install requirements and the features people can try
+  immediately: syntax highlighting, snippets, one-key run, and check-only
+  validation.
+- Version follows the CLI package at `1.0.4`. No editor behavior changed.
+
 ## 1.0.3
 
 - New command **Luca: Check Luca File**: saves the active `.lucc` file and runs

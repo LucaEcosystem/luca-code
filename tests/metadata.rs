@@ -42,8 +42,8 @@ fn extension_manifest() -> String {
 fn package_and_product_versions_agree() {
     let cargo = cargo_version();
     let product = product_version();
-    assert_eq!(cargo, "1.0.3");
-    assert_eq!(product, "1.0.3 Beta");
+    assert_eq!(cargo, "1.0.4");
+    assert_eq!(product, "1.0.4 Beta");
     assert!(
         product.starts_with(&cargo),
         "product version starts with the package version"
@@ -78,6 +78,14 @@ fn changelog_tracks_unreleased_and_current_release() {
     assert!(
         changelog.contains("## Unreleased"),
         "changelog has an Unreleased section"
+    );
+    assert!(
+        changelog.contains("## 1.0.4 Beta"),
+        "changelog records 1.0.4 Beta"
+    );
+    assert!(
+        changelog.contains("## 1.0.4 Beta (2026-11-21)"),
+        "changelog records the dated 1.0.4 Beta release"
     );
     assert!(
         changelog.contains("## 1.0.3 Beta"),
@@ -148,6 +156,8 @@ fn install_scripts_and_logos_are_present() {
         "logo/luca code logo light.svg",
         "logo/luca code logo dark.svg",
         "logo/luca code icon.svg",
+        "editors/vscode/icon.png",
+        "editors/vscode/images/run-file.png",
         "editors/vscode/LICENSE",
         "editors/vscode/CHANGELOG.md",
     ] {

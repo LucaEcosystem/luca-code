@@ -1,6 +1,6 @@
 # Examples gallery
 
-The `examples/` folder in the repository holds one runnable program per language area. Each subsection below shows what the program demonstrates and what it prints, verified against `luca` 1.0.3 Beta. Run any of them after installing, from the repository root:
+The `examples/` folder in the repository holds one runnable program per language area. Each subsection below shows what the program demonstrates and what it prints, verified against `luca` 1.0.4 Beta. Run any of them after installing, from the repository root:
 
 ```sh
 luca examples/hello.lucc

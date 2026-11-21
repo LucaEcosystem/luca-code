@@ -6,11 +6,11 @@ crates.io or the VS Code Marketplace, and no tag is created automatically.
 ## Versioning
 
 - **Product identity:** Luca Code 1.0 Beta.
-- **Package version:** currently `1.0.3`. Within the 1.0 generation, defect,
+- **Package version:** currently `1.0.4`. Within the 1.0 generation, defect,
   documentation, and publishing releases bump the package version; the language
   stays at its Beta content.
 - **Single source of truth:** `Cargo.toml` (`version`), `src/lib.rs`
-  (`PRODUCT_VERSION`, e.g. `"1.0.3 Beta"`), and `editors/vscode/package.json`
+  (`PRODUCT_VERSION`, e.g. `"1.0.4 Beta"`), and `editors/vscode/package.json`
   must agree. The metadata test enforces this.
 - Do not bump the version as part of an ordinary pull request.
 

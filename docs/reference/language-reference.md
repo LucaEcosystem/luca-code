@@ -1,6 +1,6 @@
 # Luca Code language reference
 
-This is the complete, user-facing description of the language as implemented for **Luca Code 1.0 Beta** (package version **1.0.3 Beta**: `luca --version` prints `luca 1.0.3 Beta`). It describes exactly what runs; for step-by-step learning, start with the [guided tour](../learn/tour/index.md).
+This is the complete, user-facing description of the language as implemented for **Luca Code 1.0 Beta** (package version **1.0.4 Beta**: `luca --version` prints `luca 1.0.4 Beta`). It describes exactly what runs; for step-by-step learning, start with the [guided tour](../learn/tour/index.md).
 
 Everything here is verified behavior. When this reference and any doc disagree, this page is the correction target — and if a discrepancy turns out to be a defect in the implementation, report it in the repository.
 

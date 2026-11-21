@@ -4,9 +4,15 @@ This installs the `luca` command, which runs Luca programs: `luca hello.lucc`. I
 
 ## 1. macOS or Linux
 
-You need `git` and Rust (`cargo`). The installer fetches Rust for you if it is missing.
+You need `git` and Rust (`cargo`). The installer fetches Rust for you if it is missing, then builds and installs `luca` from source.
 
-**Clone and install:**
+**Fastest — one line (bash or zsh):**
+
+```sh
+bash <(curl -fsSL https://raw.githubusercontent.com/LucaEcosystem/luca-code/main/scripts/install.sh)
+```
+
+**Or clone and install:**
 
 ```sh
 git clone --depth 1 https://github.com/LucaEcosystem/luca-code.git
@@ -14,16 +20,12 @@ cd luca-code
 bash scripts/install.sh
 ```
 
-Or one line without cloning first:
-
-```sh
-LUCA_REPO_URL=https://github.com/LucaEcosystem/luca-code.git bash <(curl -sSf https://raw.githubusercontent.com/LucaEcosystem/luca-code/main/scripts/install.sh)
-```
+To install from a fork, set `LUCA_REPO_URL` before the one-liner.
 
 Then verify:
 
 ```sh
-luca --version   # prints: luca 1.0.3 Beta
+luca --version   # prints: luca 1.0.4 Beta
 ```
 
 If the installer says `luca` is not on your `PATH`, add the line it prints (usually `export PATH="$HOME/.cargo/bin:$PATH"`) to `~/.zshrc` (macOS default) or `~/.bashrc` (most Linux), restart the terminal, and verify again.
@@ -47,7 +49,7 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 Then verify:
 
 ```powershell
-luca --version   # prints: luca 1.0.3 Beta
+luca --version   # prints: luca 1.0.4 Beta
 ```
 
 If `luca` is not recognized, add `%USERPROFILE%\.cargo\bin` to your user `PATH` (search "environment variables" in Settings), **restart the terminal**, and verify again.

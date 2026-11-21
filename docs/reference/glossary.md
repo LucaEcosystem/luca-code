@@ -6,7 +6,7 @@ Plain-language definitions of the terms used across the Luca Code documentation.
 |---|---|
 | **Luca Code** | The general-purpose programming language documented here. Source files end in `.lucc`. (A sibling language, Luca UI, uses `.lucu` and is planned separately.) |
 | **Beta / 1.0 Beta** | The language's *product identity* for this generation: the complete feature set, undergoing validation and stabilization. See [CHANGELOG](../../CHANGELOG.md). |
-| **Package version** | The machine-facing version (currently **1.0.3**): `luca --version` prints `luca 1.0.3 Beta`. Marketing text says "1.0 Beta". |
+| **Package version** | The machine-facing version (currently **1.0.4**): `luca --version` prints `luca 1.0.4 Beta`. Marketing text says "1.0 Beta". |
 | **Interpreter** | The reference implementation: reads your program, checks it, and executes it directly. Written in Rust. The 1.0 line is interpreter-only; no native compiler is planned for it. |
 | **`.lucc`** | A Luca Code source file. The CLI refuses any other extension. |
 | **`int` / `dec`** | Whole numbers / exact base-10 decimals. `dec` keeps the digits you wrote — `0.1 + 0.2` is exactly `0.3`, and `10 / 4` is `2.5`. |

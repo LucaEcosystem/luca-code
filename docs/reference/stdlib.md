@@ -1,4 +1,4 @@
-# Standard library reference (1.0 Beta, package 1.0.3 Beta)
+# Standard library reference (1.0 Beta, package 1.0.4 Beta)
 
 Four built-in modules — `Math`, `Text`, `File`, and `System` — ship with the interpreter. Import them like any module (`import Math`); a same-named `.lucc` file you happen to have is ignored in favor of the built-in.
 

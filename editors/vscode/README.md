@@ -2,18 +2,20 @@
 
 Official language support for [Luca Code](https://github.com/LucaEcosystem/luca-code) — `.lucc` syntax highlighting, snippets, one-key run, syntax/import validation, and clickable diagnostics. This page mirrors the same documentation as the repository, so what you read on the Marketplace matches GitHub.
 
+Luca Code is a small general-purpose language with exact decimal math (`10 / 4` is `2.5`), plain-language errors, and a dependency-free Rust reference interpreter. This extension is the editor front end: write a `.lucc` file, press Run, and see output in the integrated terminal or diagnostics in the editor.
+
+![Luca Code syntax highlighting and title-bar actions in VS Code](images/run-file.png)
+
 ## Requirements
 
-The extension drives the `luca` CLI. Install it first (a Rust-based build; no account needed):
+The extension drives the `luca` CLI. Install it first (a Rust-based build; no account needed). On macOS or Linux:
 
 ```sh
-git clone --depth 1 https://github.com/LucaEcosystem/luca-code.git
-cd luca-code
-bash scripts/install.sh            # Windows: .\scripts\install.ps1 in PowerShell
-luca --version                     # prints: luca 1.0.3 Beta
+bash <(curl -fsSL https://raw.githubusercontent.com/LucaEcosystem/luca-code/main/scripts/install.sh)
+luca --version                     # prints: luca 1.0.4 Beta
 ```
 
-Full per-OS instructions and PATH fixes: [install guide](https://github.com/LucaEcosystem/luca-code/blob/main/docs/learn/install.md).
+On Windows, use `git clone --depth 1 https://github.com/LucaEcosystem/luca-code.git`, then `.\scripts\install.ps1` in PowerShell. Full per-OS instructions and PATH fixes: [install guide](https://github.com/LucaEcosystem/luca-code/blob/main/docs/learn/install.md).
 
 ## Features
 

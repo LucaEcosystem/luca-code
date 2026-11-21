@@ -5,7 +5,7 @@ The official extension gives `.lucc` files syntax highlighting, snippets, one-ke
 ## 1. Install the extension
 
 1. Install the `luca` CLI first: [install.md](install.md), then check `luca --version` works in a terminal.
-2. In VS Code: Extensions view (`⇧⌘X`) → search **"Luca Code"** → click **Install**.
+2. In VS Code: Extensions view (`⇧⌘X`) → search **"Luca Code"** → click **Install**, or install directly from the [Marketplace listing](https://marketplace.visualstudio.com/items?itemName=luca-ecosystem.luca-code).
 3. Open any `.lucc` file — keywords should be highlighted.
 
 ## 2. Use it
@@ -38,7 +38,7 @@ You will see: *"the 'luca' CLI was not found."* Fix it one of two ways:
 
 ## 4. Upgrade / uninstall
 
-- **Upgrade the extension:** VS Code updates Marketplace extensions automatically, or reinstall from the Marketplace listing to force the newest version. (Packaged by hand? The extension source lives in `editors/vscode/`; current extension version is **1.0.3**.)
+- **Upgrade the extension:** VS Code updates Marketplace extensions automatically, or reinstall from the Marketplace listing to force the newest version. (Packaged by hand? The extension source lives in `editors/vscode/`; current extension version is **1.0.4**.)
 - **Upgrade the CLI:** re-run the installer ([install.md](install.md#3-upgrade)).
 - **Uninstall the extension:** Extensions view → Luca Code → Uninstall. **Uninstall the CLI:** [install.md](install.md#4-uninstall).
 

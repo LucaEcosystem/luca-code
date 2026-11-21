@@ -14,7 +14,7 @@ body:
     attributes:
       label: Luca Code version
       description: Output of `luca --version`.
-      placeholder: luca 1.0.3 Beta
+      placeholder: luca 1.0.4 Beta
     validations:
       required: true
   - type: input

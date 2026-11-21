@@ -2,8 +2,14 @@
   "name": "luca-code",
   "displayName": "Luca Code (1.0 Beta)",
   "description": "Official language support for Luca Code 1.0 Beta: syntax highlighting, snippets, one-key run, and validation for .lucc files.",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "publisher": "luca-ecosystem",
+  "icon": "icon.png",
+  "preview": true,
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
   "license": "SEE LICENSE IN LICENSE",
   "repository": {
     "type": "git",
@@ -17,11 +23,18 @@
     "vscode": "^1.85.0"
   },
   "categories": [
-    "Programming Languages"
+    "Programming Languages",
+    "Snippets"
   ],
   "keywords": [
     "luca",
-    "lucc"
+    "lucc",
+    "luca-code",
+    "exact-decimal",
+    "programming-language",
+    "interpreter",
+    "syntax-highlighting",
+    "beginner-friendly"
   ],
   "main": "./extension.js",
   "activationEvents": [

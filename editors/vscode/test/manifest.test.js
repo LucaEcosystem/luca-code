@@ -21,6 +21,10 @@ test("package.json is a valid extension manifest", () => {
   assert.equal(manifest.main, "./extension.js");
   assert.ok(fs.existsSync(path.join(root, "extension.js")));
   assert.deepEqual(manifest.activationEvents, ["onLanguage:luca"]);
+  assert.equal(manifest.preview, true);
+  assert.equal(manifest.icon, "icon.png");
+  assert.ok(fs.existsSync(path.join(root, manifest.icon)), "Marketplace icon exists");
+  assert.ok(fs.existsSync(path.join(root, "images/run-file.png")), "screenshot exists");
 });
 
 test("language, grammar, and snippets wiring is consistent", () => {
@@ -68,8 +72,23 @@ test("packaging metadata and license are present", () => {
     fs.readFileSync(path.join(repoRoot, "LICENSE"), "utf8"),
     "extension LICENSE matches the repository LICENSE"
   );
+  assert.deepEqual(manifest.galleryBanner, { color: "#1e1e1e", theme: "dark" });
+  assert.ok(manifest.categories.includes("Snippets"));
+  for (const keyword of [
+    "luca",
+    "lucc",
+    "luca-code",
+    "exact-decimal",
+    "programming-language",
+    "interpreter",
+    "syntax-highlighting",
+    "beginner-friendly",
+  ]) {
+    assert.ok(manifest.keywords.includes(keyword), `keyword: ${keyword}`);
+  }
   const readme = fs.readFileSync(path.join(root, "README.md"), "utf8");
   assert.ok(readme.includes("Luca: Check Luca File"));
+  assert.ok(readme.includes("images/run-file.png"));
   assert.ok(readme.includes("## Limitations"));
 });
 

@@ -33,7 +33,7 @@ fn rejects_a_mismatched_declared_type() {
 
 #[test]
 fn identifies_product_release() {
-    assert_eq!(PRODUCT_VERSION, "1.0.3 Beta");
+    assert_eq!(PRODUCT_VERSION, "1.0.4 Beta");
 }
 
 #[test]
